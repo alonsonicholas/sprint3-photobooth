@@ -399,6 +399,15 @@
             font-weight: bold;
             margin-top: 6px;
         }
+        /* Ensure nav buttons are readable on white config/modal backgrounds */
+        .config-content .nav-button,
+        .modal-overlay .nav-button {
+            background: #667eea;
+            color: white;
+            border: none;
+        }
+        .config-content .nav-button:hover,
+        .modal-overlay .nav-button:hover { background: #5560c0; }
     </style>
 </head>
 <body>
@@ -421,25 +430,7 @@
             <!-- ...existing instructions content... -->
         </div>
 
-        <!-- Hidden Config Screen (appears after 5 clicks) -->
-        <div class="screen" id="config" style="display:none;">
-            <button class="quit-button" onclick="showScreen('welcome')">✕ Close</button>
-            <div class="header">
-                <h1>⚙️ Configuration</h1>
-                <h2>Protected Settings</h2>
-            </div>
-            <div class="content" style="justify-content: center;">
-                <div style="background: white; padding: 24px; border-radius: 12px; max-width: 560px; width: 90%; text-align: center;">
-                    <p style="margin-top:0;">Demo config page. Enter password to unlock.</p>
-                    <input id="configPassword" type="password" class="email-input" placeholder="Enter password (demo: 1234)">
-                    <div style="display:flex; gap:12px; justify-content:center; margin-top:12px;">
-                        <button class="nav-button" onclick="hideConfig()">Cancel</button>
-                        <button class="nav-button" onclick="unlockConfig()">Unlock</button>
-                    </div>
-                    <div id="configMessage" style="color:#dc3545; margin-top:10px; display:none;"></div>
-                </div>
-            </div>
-        </div>
+        <!-- (Hidden demo config removed) -->
 
         <!-- Background Selection -->
         <div class="screen" id="background">
@@ -860,16 +851,37 @@
             <button class="quit-button" onclick="showScreen('welcome')">✕ Close</button>
             <div class="header">
                 <h1>⚙️ Configuration</h1>
-                <h2>Hidden settings (demo)</h2>
+                <h2>Hidden settings</h2>
             </div>
             <div class="content" style="justify-content: flex-start; padding-top: 20px;">
                 <div class="config-content">
                     <p><strong>Event Name:</strong> <input id="cfgEventName" type="text" value="Spring Festival 2024" style="width:60%"></p>
-                    <p><strong>Price:</strong> $<input id="cfgPrice" type="number" step="0.01" value="15.00" style="width:120px"></p>
-                    <p><strong>Max Prints:</strong> <input id="cfgMaxPrints" type="number" value="10" style="width:80px"></p>
+                    <p><strong>Price (USD):</strong> $<input id="cfgPrice" type="number" step="0.01" value="15.00" style="width:120px"> <small style="color:#666">(set 0 for free)</small></p>
+                    <p style="margin-top:8px;"><strong>Max Prints:</strong> <input id="cfgMaxPrints" type="number" value="10" style="width:80px"></p>
                     <p><strong>Max Emails:</strong> <input id="cfgMaxEmails" type="number" value="5" style="width:80px"></p>
+
+                    <fieldset style="border:1px solid #eee; padding:10px; border-radius:8px; margin-top:12px;">
+                        <legend><strong>Payment Methods</strong></legend>
+                        <label style="margin-right:12px;"><input type="checkbox" id="cfgPay_cash"> Cash</label>
+                        <label style="margin-right:12px;"><input type="checkbox" id="cfgPay_card"> Credit/Debit</label>
+                        <label style="margin-right:12px;"><input type="checkbox" id="cfgPay_check"> Check</label>
+                    </fieldset>
+
+                    <fieldset style="border:1px solid #eee; padding:10px; border-radius:8px; margin-top:12px;">
+                        <legend><strong>Delivery Methods</strong></legend>
+                        <label style="margin-right:12px;"><input type="checkbox" id="cfgDel_email"> Email</label>
+                        <label style="margin-right:12px;"><input type="checkbox" id="cfgDel_print"> Print</label>
+                    </fieldset>
+
+                    <div style="margin-top:12px;">
+                        <strong>Background Pictures</strong>
+                        <div id="cfgBackgroundList" style="max-height:220px; overflow:auto; border:1px solid #f0f0f0; padding:8px; margin-top:6px; border-radius:6px;"></div>
+                        <small style="color:#666; display:block; margin-top:6px;">Check to include a background in the chooser.</small>
+                    </div>
+
                     <div style="margin-top:20px; display:flex; gap:10px; justify-content:flex-end;">
                         <button class="nav-button" onclick="applyConfig()">Save</button>
+                        <button class="nav-button" onclick="restoreDefaults()">Restore Defaults</button>
                         <button class="nav-button" onclick="showScreen('welcome')">Close</button>
                     </div>
                 </div>
@@ -907,6 +919,114 @@
             }
         };
 
+        // persisted operator config (background inclusion, payment/delivery enable)
+        const STORAGE_KEY = 'kiosk_config_v1';
+
+        function loadSavedConfig() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (!raw) return;
+                const saved = JSON.parse(raw);
+                // copy relevant keys if present
+                if (saved.eventName) config.eventName = saved.eventName;
+                if (typeof saved.price === 'number') config.price = saved.price;
+                if (Number.isInteger(saved.maxPrints)) config.maxPrints = saved.maxPrints;
+                if (Number.isInteger(saved.maxEmails)) config.maxEmails = saved.maxEmails;
+                if (Array.isArray(saved.paymentMethods)) config.paymentMethods = saved.paymentMethods;
+                if (Array.isArray(saved.deliveryMethods)) config.deliveryMethods = saved.deliveryMethods;
+                if (saved.enabledBackgrounds) {
+                    // map of id -> boolean
+                    window.enabledBackgrounds = saved.enabledBackgrounds;
+                }
+            } catch (e) {
+                console.warn('Failed to load saved config', e);
+            }
+        }
+
+        function saveConfigToStorage() {
+            try {
+                const toSave = {
+                    eventName: config.eventName,
+                    price: config.price,
+                    maxPrints: config.maxPrints,
+                    maxEmails: config.maxEmails,
+                    paymentMethods: config.paymentMethods,
+                    deliveryMethods: config.deliveryMethods,
+                    enabledBackgrounds: window.enabledBackgrounds || {}
+                };
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+            } catch (e) {
+                console.warn('Failed to save config', e);
+            }
+        }
+
+        // When the config screen opens, populate inputs from runtime config
+        function populateConfigUI() {
+            document.getElementById('cfgEventName').value = config.eventName || '';
+            document.getElementById('cfgPrice').value = (typeof config.price === 'number') ? config.price.toFixed(2) : '';
+            document.getElementById('cfgMaxPrints').value = config.maxPrints || 0;
+            document.getElementById('cfgMaxEmails').value = config.maxEmails || 0;
+
+            // payment methods checkboxes
+            document.getElementById('cfgPay_cash').checked = config.paymentMethods.includes('cash');
+            document.getElementById('cfgPay_card').checked = config.paymentMethods.includes('card');
+            document.getElementById('cfgPay_check').checked = config.paymentMethods.includes('check');
+
+            // delivery methods
+            document.getElementById('cfgDel_email').checked = config.deliveryMethods.includes('email');
+            document.getElementById('cfgDel_print').checked = config.deliveryMethods.includes('print');
+
+            // build background list with current enabled state
+            buildCfgBackgroundList();
+        }
+
+        // Create background checklist inside config screen
+        function buildCfgBackgroundList() {
+            const container = document.getElementById('cfgBackgroundList');
+            container.innerHTML = '';
+            // ensure enabledBackgrounds exists
+            window.enabledBackgrounds = window.enabledBackgrounds || {};
+
+            Object.keys(config.backgroundCategories).forEach(cat => {
+                const heading = document.createElement('div');
+                heading.style.marginTop = '8px';
+                heading.innerHTML = `<strong>${cat}</strong>`;
+                container.appendChild(heading);
+
+                config.backgroundCategories[cat].forEach(bg => {
+                    const id = String(bg.id);
+                    const row = document.createElement('label');
+                    row.style.display = 'flex';
+                    row.style.alignItems = 'center';
+                    row.style.gap = '8px';
+                    row.style.margin = '6px 0';
+
+                    const cb = document.createElement('input');
+                    cb.type = 'checkbox';
+                    cb.dataset.bgId = id;
+                    // default to true unless explicitly disabled
+                    cb.checked = (window.enabledBackgrounds[id] === undefined) ? true : !!window.enabledBackgrounds[id];
+                    cb.addEventListener('change', function () {
+                        window.enabledBackgrounds[id] = cb.checked;
+                    });
+
+                    const preview = document.createElement('div');
+                    preview.innerHTML = bg.preview || '';
+                    preview.style.width = '60px';
+                    preview.style.height = '40px';
+                    preview.style.display = 'inline-block';
+
+                    const labelText = document.createElement('div');
+                    labelText.textContent = bg.name;
+
+                    row.appendChild(cb);
+                    row.appendChild(preview);
+                    row.appendChild(labelText);
+                    container.appendChild(row);
+                });
+            });
+        }
+
         // Session data
         let session = {
             background: null,
@@ -931,10 +1051,15 @@
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(screenId).classList.add('active');
             currentScreen = screenId;
-            
+            // If opening config, populate its inputs from runtime config
+            if (screenId === 'config') populateConfigUI();
             // Setup instructions screen based on delivery method
             if (screenId === 'instructions') {
                 setupInstructionsScreen();
+            }
+            // Update payment/delivery buttons when showing their screens
+            if (screenId === 'delivery' || screenId === 'payment' || screenId === 'background') {
+                updateMethodButtons();
             }
         }
         
@@ -1118,8 +1243,12 @@
             container.innerHTML = '';
             
             const backgrounds = config.backgroundCategories[category];
-            
+            // Respect enabledBackgrounds map (if a background id key is present and false,
+            // skip showing that background in the chooser)
+            const enabled = window.enabledBackgrounds || {};
+
             backgrounds.forEach(bg => {
+                if (enabled[String(bg.id)] === false) return; // skip disabled backgrounds
                 const button = document.createElement('button');
                 button.className = 'touch-button';
                 button.onclick = () => selectBackground(bg);
@@ -1277,65 +1406,8 @@
             document.getElementById('emailNext').disabled = !allValid || session.emails.length !== session.emailCount;
         }
 
-                (function(){
-            const SECRET_TAPS = 5;
-            const TAP_TIMEOUT_MS = 2500; // reset taps after 2.5s
-            const DEMO_PASSWORD = '1234';
-
-            let tapCount = 0;
-            let tapTimer = null;
-
-            function resetTaps() {
-                tapCount = 0;
-                if (tapTimer) { clearTimeout(tapTimer); tapTimer = null; }
-            }
-
-            function showConfigScreen() {
-                // hide other screens and show config
-                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-                const cfg = document.getElementById('config');
-                cfg.classList.add('active');
-                currentScreen = 'config';
-                document.getElementById('configPassword').value = '';
-                document.getElementById('configMessage').style.display = 'none';
-                setTimeout(() => document.getElementById('configPassword').focus(), 120);
-            }
-
-            window.unlockConfig = function() {
-                const input = document.getElementById('configPassword');
-                const msg = document.getElementById('configMessage');
-                if (input.value === DEMO_PASSWORD) {
-                    msg.style.display = 'none';
-                    // Demo: show unlocked message then return to welcome
-                    alert('Configuration unlocked (demo).');
-                    resetTaps();
-                    showScreen('welcome');
-                } else {
-                    msg.textContent = 'Incorrect password';
-                    msg.style.display = 'block';
-                }
-            };
-
-            window.hideConfig = function() {
-                // return to welcome screen
-                resetTaps();
-                showScreen('welcome');
-            };
-
-            document.addEventListener('click', function(e){
-                // ignore clicks on interactive elements so normal flows are unaffected
-                if (e.target.closest('input, button, .touch-button, .nav-button, .quit-button')) return;
-
-                tapCount++;
-                if (tapTimer) clearTimeout(tapTimer);
-                tapTimer = setTimeout(resetTaps, TAP_TIMEOUT_MS);
-
-                if (tapCount >= SECRET_TAPS) {
-                    resetTaps();
-                    showConfigScreen();
-                }
-            }, { passive: true });
-        })();
+        // Removed demo-style unlock handler. Only the modal-based 5-tap handler
+        // below is used to require the password every time 5 taps are detected.
         
         // Camera
         function takePhoto() {
@@ -1575,21 +1647,24 @@
                 }
             }
 
-            // Listen for clicks/taps on the kiosk area
+            // Listen for clicks/taps on the kiosk area. Only clicks outside
+            // interactive elements increment the counter.
             document.addEventListener('click', function (ev) {
-                if (modalOpen) return; // ignore while modal open
-                // ignore clicks on form inputs to avoid accidental triggers
-                const tag = (ev.target && ev.target.tagName) ? ev.target.tagName.toLowerCase() : '';
-                if (tag === 'input' || tag === 'textarea' || ev.target.closest && ev.target.closest('.modal-overlay')) {
+                if (modalOpen) return; // ignore while password modal is open
+                // If the configuration screen is open, do NOT count taps here.
+                if (currentScreen === 'config') return;
+                // ignore clicks on buttons/inputs/textareas/overlays
+                if (ev.target.closest && ev.target.closest('button, input, textarea, .modal-overlay, #config')) {
                     return;
                 }
 
                 secretCount++;
                 if (secretTimer) clearTimeout(secretTimer);
-                // reset count after 2s of inactivity
-                secretTimer = setTimeout(resetSecret, 2000);
+                // reset count shortly after inactivity
+                secretTimer = setTimeout(resetSecret, 500);
 
                 if (secretCount >= requiredTaps) {
+                    // require password every time: open modal and reset counter
                     resetSecret();
                     showPasswordModal();
                 }
@@ -1629,8 +1704,10 @@
                     const val = input.value || '';
                     if (val === secretPassword) {
                         closeModal();
-                        // show config screen
+                        // Only after correct password do we show config
                         showScreen('config');
+                        // Ensure next 5 taps require password again
+                        resetSecret();
                     } else {
                         err.style.display = 'block';
                         setTimeout(() => {
@@ -1643,48 +1720,154 @@
 
                 cancel.addEventListener('click', function () {
                     closeModal();
+                    // ensure secret counter reset so password is required on next 5 taps
+                    resetSecret();
                 });
 
-                // allow Enter key
+                // allow Enter and Escape key handling inside modal
                 input.addEventListener('keyup', function (e) {
                     if (e.key === 'Enter') submit.click();
                     if (e.key === 'Escape') cancel.click();
                 });
-            }
 
-            // allow ESC to close config screen
-            document.addEventListener('keydown', function(e){
-                if (e.key === 'Escape' && currentScreen === 'config') {
-                    showScreen('welcome');
+                // Global ESC handling while modal open: close modal and don't open config
+                function onKeyDown(e) {
+                    if (e.key === 'Escape' && modalOpen) {
+                        cancel.click();
+                    }
                 }
-            }, true);
+
+                document.addEventListener('keydown', onKeyDown, { once: false });
+
+                // When config screen is visible, ESC should close config and return to welcome
+                // Add a global keydown listener that will close config if ESC pressed while
+                // config is active.
+                document.addEventListener('keydown', function (e) {
+                    if (e.key === 'Escape' && currentScreen === 'config') {
+                        // Close config and return to welcome
+                        showScreen('welcome');
+                        // Also reset secret counter so next 5 taps require password
+                        resetSecret();
+                    }
+                }, true);
+            }
         })();
 
         // Apply config values from config screen to runtime config
         function applyConfig() {
+            // Read values from config UI
             const en = document.getElementById('cfgEventName').value || config.eventName;
-            const pr = parseFloat(document.getElementById('cfgPrice').value) || config.price;
-            const mp = parseInt(document.getElementById('cfgMaxPrints').value) || config.maxPrints;
-            const me = parseInt(document.getElementById('cfgMaxEmails').value) || config.maxEmails;
+            const pr = parseFloat(document.getElementById('cfgPrice').value);
+            const mp = parseInt(document.getElementById('cfgMaxPrints').value);
+            const me = parseInt(document.getElementById('cfgMaxEmails').value);
 
+            // Payment methods
+            const pays = [];
+            if (document.getElementById('cfgPay_cash').checked) pays.push('cash');
+            if (document.getElementById('cfgPay_card').checked) pays.push('card');
+            if (document.getElementById('cfgPay_check').checked) pays.push('check');
+
+            // Delivery methods
+            const dels = [];
+            if (document.getElementById('cfgDel_email').checked) dels.push('email');
+            if (document.getElementById('cfgDel_print').checked) dels.push('print');
+
+            // Apply to runtime config (with safe fallbacks)
             config.eventName = en;
-            config.price = pr;
-            config.maxPrints = mp;
-            config.maxEmails = me;
+            if (!Number.isNaN(pr)) config.price = pr;
+            if (Number.isInteger(mp)) config.maxPrints = mp;
+            if (Number.isInteger(me)) config.maxEmails = me;
 
-            // Update UI if necessary (e.g., receipt placeholders)
-            // simple feedback modal
+            // Ensure at least one payment/delivery remains enabled (fallback to previous)
+            if (pays.length > 0) config.paymentMethods = pays;
+            if (dels.length > 0) config.deliveryMethods = dels;
+
+            // Save enabledBackgrounds map (window.enabledBackgrounds maintained by checkboxes)
+            window.enabledBackgrounds = window.enabledBackgrounds || {};
+
+            // Persist to localStorage
+            saveConfigToStorage();
+
+            // Refresh UI that depends on config
+            loadBackgrounds();
+            // Update visible payment/delivery buttons immediately
+            if (typeof updateMethodButtons === 'function') updateMethodButtons();
+
+            // Clamp any active session values to the new maxima
+            session.printCount = Math.min(session.printCount || 1, config.maxPrints);
+            session.emailCount = Math.min(session.emailCount || 1, config.maxEmails);
+
+            // Provide feedback modal
             const m = document.createElement('div');
             m.className = 'modal-overlay';
-            m.innerHTML = `<div style="background:white;padding:20px;border-radius:10px;text-align:center;">
-                <strong>Settings saved</strong><div style="margin-top:12px;"><button onclick="this.parentElement.parentElement.remove()" class="nav-button">OK</button></div></div>`;
+            m.innerHTML = `<div role="dialog" aria-modal="true" style="background:white;padding:20px;border-radius:10px;text-align:center;max-width:320px;margin:auto;">
+                <strong>Settings saved</strong>
+                <div style="margin-top:12px;display:flex;justify-content:center;">
+                    <button id="cfgSavedOk" class="nav-button">OK</button>
+                </div>
+            </div>`;
             document.body.appendChild(m);
 
+            // Wire up the OK button to remove the overlay and re-enable interactions
+            const okBtn = document.getElementById('cfgSavedOk');
+            if (okBtn) {
+                okBtn.addEventListener('click', function () {
+                    m.remove();
+                });
+            }
+            // Allow Escape key to dismiss the small modal as well
+            function onSavedKey(e) {
+                if (e.key === 'Escape') {
+                    m.remove();
+                    document.removeEventListener('keydown', onSavedKey);
+                }
+            }
+            document.addEventListener('keydown', onSavedKey);
+            }
+
+            // Update delivery and payment buttons based on config.
+            function updateMethodButtons() {
+                // Delivery buttons
+                const emailBtn = document.getElementById('emailBtn');
+                const printBtn = document.getElementById('printBtn');
+                if (emailBtn) emailBtn.style.display = config.deliveryMethods.includes('email') ? 'flex' : 'none';
+                if (printBtn) printBtn.style.display = config.deliveryMethods.includes('print') ? 'flex' : 'none';
+
+                // Payment buttons
+                const cashBtn = document.getElementById('cashBtn');
+                const cardBtn = document.getElementById('cardBtn');
+                const checkBtn = document.getElementById('checkBtn');
+                if (cashBtn) cashBtn.style.display = config.paymentMethods.includes('cash') ? 'flex' : 'none';
+                if (cardBtn) cardBtn.style.display = config.paymentMethods.includes('card') ? 'flex' : 'none';
+                if (checkBtn) checkBtn.style.display = config.paymentMethods.includes('check') ? 'flex' : 'none';
+
+                // Clear invalid selections if necessary
+                if (session.delivery && !config.deliveryMethods.includes(session.delivery)) {
+                    session.delivery = null;
+                    const dn = document.getElementById('deliveryNext'); if (dn) dn.disabled = true;
+                }
+                if (session.payment && !config.paymentMethods.includes(session.payment)) {
+                    session.payment = null;
+                    const pn = document.getElementById('paymentNext'); if (pn) pn.disabled = true;
+                }
+
+                // Update category tabs/backgrounds if needed
+                loadBackgrounds();
+            }
+
+                (function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'992d4c1ab31813f8',t:'MTc2MTE4MTIyNC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>    </script>        }            showScreen('welcome');            // Return to welcome
 
 
 
 
 
+            }
+            (function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'992d4c1ab31813f8',t:'MTc2MTE4MTIyNC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>    </script>        }            showScreen('welcome');            // Return to welcome
 
-
-</html><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'992d4c1ab31813f8',t:'MTc2MTE4MTIyNC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>    </script>        }            showScreen('welcome');            // Return to welcome
+                // Load persisted operator config and initialize background list before first render
+                loadSavedConfig();
+                window.enabledBackgrounds = window.enabledBackgrounds || {};
+                // Preload backgrounds (so config respects enabled list even before session)
+                loadBackgrounds();
+                // Update method buttons to reflect persisted config
+                if (typeof updateMethodButtons === 'function') updateMethodButtons();
