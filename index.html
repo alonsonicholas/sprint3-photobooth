@@ -5,12 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Photo Kiosk</title>
     <style>
+                /* Ensure nav buttons are readable on white config/modal backgrounds */
+        .config-content .nav-button,
+        .modal-overlay .nav-button {
+            background: #667eea;
+            color: white;
+            border: none;
+        }
+        .config-content .nav-button:hover,
+        .modal-overlay .nav-button:hover { background: #5560c0; }
         body {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
             font-family: 'Arial', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            /* accessibility: base font size adjustable via JS */
+            font-size: var(--app-base-font-size, 16px);
             height: 100%;
             overflow: hidden;
         }
@@ -437,8 +448,85 @@
 
 
     </style>
+    <style>
+        /* Config modal styles */
+        .config-modal {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.6);
+            z-index: 12000;
+        }
+        .config-box {
+            background: #fff;
+            color: #222;
+            padding: 22px;
+            border-radius: 12px;
+            position: relative;
+            width: min(760px, 94%);
+            max-height: 84vh;
+            overflow: auto;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+        }
+        .config-box h3 { margin-top: 0; }
+        .config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start; }
+        #cfgBackgroundList { max-height: 240px; overflow: auto; border: 1px solid #eee; padding: 8px; border-radius: 6px; }
+        .cfg-actions { display:flex; gap:12px; justify-content: flex-end; margin-top: 12px; }
+        .config-box .nav-button { background: #667eea; color: #fff; border: none; }
+        /* prominent close button for operator/password modal */
+        .password-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: none;
+            background: #c0392b;
+            color: #fff;
+            font-size: 18px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+        }
+        .password-close:hover { background: #a8322a; }
+    </style>
 </head>
 <body>
+    <!-- Accessibility toggle + panel -->
+    <div id="a11yToolbar" style="position:fixed; left:12px; top:50%; transform:translateY(-50%); z-index:16000;">
+        <!-- Much larger touch-friendly accessibility toggle with inline SVG (person with raised arms) -->
+        <button id="a11yToggle" aria-expanded="false" aria-controls="a11yPanel" aria-label="Open accessibility options" class="nav-button" 
+                style="background:#0b3b66;color:#fff;border:none;border-radius:16px;padding:8px; width:110px; height:110px; display:inline-flex; align-items:center; justify-content:center; box-shadow:0 12px 30px rgba(0,0,0,0.35); touch-action:manipulation; -webkit-tap-highlight-color: transparent;">
+            <!-- PNG accessibility icon (person with raised arms) from Wikimedia Commons -->
+            <img id="a11yIconImg" src="https://uxwing.com/wp-content/themes/uxwing/download/web-app-development/accessibility-icon.png" alt="Accessibility options" style="width:76px; height:76px; object-fit:contain; display:block;" />
+        </button>
+    <div id="a11yPanel" style="display:none; position:absolute; left:0; top:120px; margin-left:0; background:rgba(255,255,255,0.98); padding:8px; border-radius:10px; box-shadow:0 10px 30px rgba(0,0,0,0.18); width:140px;">
+        <div style="display:flex; flex-direction:column; gap:10px; align-items:stretch; justify-content:center;">
+            <button id="a11yFontDec" aria-label="Decrease font size" title="Decrease font size" class="nav-button" 
+                style="background:#111;color:#fff;border:none;border-radius:10px;padding:14px;font-size:1.25rem;width:100%;min-height:56px;display:inline-flex;align-items:center;justify-content:center;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">A-</button>
+            <button id="a11yFontInc" aria-label="Increase font size" title="Increase font size" class="nav-button" 
+                style="background:#111;color:#fff;border:none;border-radius:10px;padding:14px;font-size:1.25rem;width:100%;min-height:56px;display:inline-flex;align-items:center;justify-content:center;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">A+</button>
+            <button id="a11yReset" aria-label="Reset accessibility settings" title="Reset" class="nav-button" 
+                style="background:#111;color:#fff;border:none;border-radius:10px;padding:12px;font-size:1.05rem;width:100%;min-height:48px;display:inline-flex;align-items:center;justify-content:center;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">Reset</button>
+        </div>
+    </div>
+        <!-- Reprint confirmation modal (demo-only) -->
+        <div id="reprintModal" class="config-modal" role="dialog" aria-modal="true" style="display:none;">
+            <div class="config-box" style="max-width:360px; text-align:center;">
+                <h3 style="margin-top:0;">Reprint Ticket</h3>
+                <p id="reprintText" style="color:#333; margin:12px 0;"></p>
+                <div style="display:flex; gap:12px; justify-content:center; margin-top:12px;">
+                    <button class="nav-button" onclick="confirmReprint()" style="background:#667eea; color:white; border:none;">Confirm</button>
+                    <button class="nav-button" onclick="document.getElementById('reprintModal').style.display='none'" style="background:#ccc; color:#222;">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="kiosk-container">
 
      <div id="totalBox">
@@ -629,7 +717,7 @@
             <button class="quit-button" onclick="quitSession()">✕ Quit</button>
             <div class="header">
                 <h2>Take A Photo!</h2>
-                <p style="font-size: 1.1rem; margin: 10px 0; color: rgba(255,255,255,0.9); font-style: italic;">This photo is only used for verification purposes</p>
+                <p style="font-size: 1.1rem; margin: 10px 0; color: rgba(255,255,255,0.9); font-style: italic;">This photo is only used to match to the final picture, it will not be used for any other purposes</p>
                 <div class="progress-bar">
                     <div class="progress-fill" style="width: 95%"></div>
                 </div>
@@ -868,6 +956,59 @@
     </div>
 
     <script>
+        // Password modal handling
+        function showPasswordModal() {
+            const modal = document.getElementById('passwordModal');
+            if (!modal) return;
+            // clear previous state
+            document.getElementById('pwdInput').value = '';
+            document.getElementById('pwdError').textContent = '';
+            modal.style.display = 'flex';
+            setTimeout(() => document.getElementById('pwdInput').focus(), 80);
+        }
+
+        function closePasswordModal() {
+            const modal = document.getElementById('passwordModal');
+            if (!modal) return;
+            modal.style.display = 'none';
+        }
+
+        function verifyPasswordAndOpenConfig() {
+            const val = document.getElementById('pwdInput').value || '';
+            if (val === '1234') {
+                closePasswordModal();
+                showConfigModal();
+            } else {
+                const err = document.getElementById('pwdError');
+                err.textContent = 'Incorrect PIN. If you stumbled here, press X to exit and continue.';
+                // small visual feedback
+                const box = document.getElementById('passwordBox');
+                if (box) {
+                    box.animate([{ transform: 'translateX(-6px)' }, { transform: 'translateX(6px)' }, { transform: 'translateX(0)' }], { duration: 220 });
+                }
+            }
+        }
+        // Close modals with Escape
+        document.addEventListener('keydown', function (ev) {
+            if (ev.key === 'Escape' || ev.key === 'Esc') {
+                const pwd = document.getElementById('passwordModal');
+                if (pwd && pwd.style.display === 'flex') {
+                    closePasswordModal();
+                    return;
+                }
+                const cfg = document.getElementById('configModal');
+                if (cfg && cfg.style.display === 'flex') {
+                    closeConfigModal();
+                    return;
+                }
+                const timeout = document.getElementById('timeoutModal');
+                if (timeout && timeout.style.display === 'flex') {
+                    timeout.style.display = 'none';
+                }
+            }
+        });
+    </script>
+    <script>
         // Configuration (would be loaded from external file)
         const config = {
             eventName: "Festival 2025",
@@ -897,6 +1038,320 @@
                 ]
             }
         };
+
+        // --- Persisted operator config helpers ---
+        const STORAGE_KEY = 'kiosk_config_v1';
+
+        function saveConfigToStorage() {
+            try {
+                const toSave = {
+                    eventName: config.eventName,
+                    basePrice: config.basePrice,
+                    additionalPrintPrice: config.additionalPrintPrice,
+                    paymentMethods: config.paymentMethods,
+                    deliveryMethods: config.deliveryMethods,
+                    maxPrints: config.maxPrints,
+                    maxEmails: config.maxEmails,
+                    enabledBackgrounds: window.enabledBackgrounds || {}
+                };
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+            } catch (e) {
+                console.warn('Failed to save config', e);
+            }
+        }
+
+        function loadSavedConfig() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (!raw) return;
+                const saved = JSON.parse(raw);
+                if (saved.eventName) config.eventName = saved.eventName;
+                if (typeof saved.basePrice === 'number') config.basePrice = saved.basePrice;
+                if (typeof saved.additionalPrintPrice === 'number') config.additionalPrintPrice = saved.additionalPrintPrice;
+                if (Number.isInteger(saved.maxPrints)) config.maxPrints = saved.maxPrints;
+                if (Number.isInteger(saved.maxEmails)) config.maxEmails = saved.maxEmails;
+                if (Array.isArray(saved.paymentMethods)) config.paymentMethods = saved.paymentMethods;
+                if (Array.isArray(saved.deliveryMethods)) config.deliveryMethods = saved.deliveryMethods;
+                if (saved.enabledBackgrounds) window.enabledBackgrounds = saved.enabledBackgrounds;
+            } catch (e) {
+                console.warn('Failed to load saved config', e);
+            }
+        }
+
+        // --- Secret 5-tap handler to show config modal ---
+        (function () {
+            let count = 0;
+            let timer = null;
+            const required = 5;
+            const resetMs = 600;
+
+            document.addEventListener('click', function (ev) {
+                // ignore clicks on interactive elements
+                if (ev.target.closest && ev.target.closest('button, input, textarea, select, .config-modal, .password-modal')) return;
+                count++;
+                if (timer) clearTimeout(timer);
+                timer = setTimeout(() => { count = 0; timer = null; }, resetMs);
+                if (count >= required) {
+                    count = 0;
+                    showPasswordModal();
+                }
+            }, true);
+        })();
+
+        // Populate config modal inputs from current runtime config
+        function populateConfigUI() {
+            const el = (id) => document.getElementById(id);
+            el('cfgEventName').value = config.eventName || '';
+            el('cfgBasePrice').value = (typeof config.basePrice === 'number') ? config.basePrice.toFixed(2) : '';
+            el('cfgAdditionalPrintPrice').value = (typeof config.additionalPrintPrice === 'number') ? config.additionalPrintPrice.toFixed(2) : '';
+            el('cfgMaxPrints').value = config.maxPrints || 0;
+            el('cfgMaxEmails').value = config.maxEmails || 0;
+
+            el('cfgPay_cash').checked = config.paymentMethods.includes('cash');
+            el('cfgPay_card').checked = config.paymentMethods.includes('card');
+            el('cfgPay_check').checked = config.paymentMethods.includes('check');
+
+            el('cfgDel_email').checked = config.deliveryMethods.includes('email');
+            el('cfgDel_print').checked = config.deliveryMethods.includes('print');
+
+            buildCfgBackgroundList();
+            // populate demo ticket history
+            try { buildTicketHistory(); } catch (e) { /* ignore in case not present */ }
+        }
+
+        function buildCfgBackgroundList() {
+            const container = document.getElementById('cfgBackgroundList');
+            container.innerHTML = '';
+            window.enabledBackgrounds = window.enabledBackgrounds || {};
+                    // If there are any uploaded temp images, show an "Uploaded Images" header
+                    if (window.tempUploads && window.tempUploads.length) {
+                        const upHeader = document.createElement('div'); upHeader.innerHTML = `<strong>Uploaded Images (demo)</strong>`; upHeader.style.marginTop = '6px';
+                        container.appendChild(upHeader);
+                        window.tempUploads.forEach(u => {
+                            const row = document.createElement('div');
+                            row.style.display = 'flex'; row.style.alignItems = 'center'; row.style.gap = '8px'; row.style.margin = '6px 0';
+                            const preview = document.createElement('div'); preview.innerHTML = `<img src="${u.dataUrl}" style="width:60px;height:40px;border-radius:4px;" />`;
+                            const label = document.createElement('div'); label.textContent = u.name;
+                            const btn = document.createElement('button'); btn.className = 'nav-button'; btn.textContent = 'Add to backgrounds'; btn.style.padding='6px 10px'; btn.style.background='#4CAF50'; btn.style.color='#fff';
+                            btn.addEventListener('click', () => addUploadToBackground(u.id));
+                            row.appendChild(preview); row.appendChild(label); row.appendChild(btn);
+                            container.appendChild(row);
+                        });
+                    }
+
+                    Object.keys(config.backgroundCategories).forEach(cat => {
+                const h = document.createElement('div'); h.innerHTML = `<strong>${cat}</strong>`; h.style.marginTop = '8px';
+                container.appendChild(h);
+                config.backgroundCategories[cat].forEach(bg => {
+                    const id = String(bg.id);
+                    const row = document.createElement('label');
+                    row.style.display = 'flex'; row.style.alignItems = 'center'; row.style.gap = '8px'; row.style.margin = '6px 0';
+                    const cb = document.createElement('input'); cb.type = 'checkbox'; cb.dataset.bgId = id;
+                    cb.checked = (window.enabledBackgrounds[id] === undefined) ? true : !!window.enabledBackgrounds[id];
+                    cb.addEventListener('change', () => { window.enabledBackgrounds[id] = cb.checked; });
+                    const preview = document.createElement('div'); preview.innerHTML = bg.preview || ''; preview.style.width='60px'; preview.style.height='40px';
+                    const label = document.createElement('div'); label.textContent = bg.name;
+                    row.appendChild(cb); row.appendChild(preview); row.appendChild(label);
+                    container.appendChild(row);
+                });
+            });
+        }
+
+        function showConfigModal() {
+            const modal = document.getElementById('configModal');
+            if (!modal) return;
+            populateConfigUI();
+            modal.style.display = 'flex';
+            // focus first input
+            setTimeout(() => document.getElementById('cfgEventName').focus(), 60);
+        }
+
+        function closeConfigModal() {
+            const modal = document.getElementById('configModal');
+            if (!modal) return;
+            modal.style.display = 'none';
+        }
+
+        function applyConfig() {
+            const el = (id) => document.getElementById(id);
+            const evn = el('cfgEventName').value || config.eventName;
+            const bp = parseFloat(el('cfgBasePrice').value) || 0;
+            const ap = parseFloat(el('cfgAdditionalPrintPrice').value) || 0;
+            const mp = parseInt(el('cfgMaxPrints').value) || config.maxPrints;
+            const me = parseInt(el('cfgMaxEmails').value) || config.maxEmails;
+
+            const pays = [];
+            if (el('cfgPay_cash').checked) pays.push('cash');
+            if (el('cfgPay_card').checked) pays.push('card');
+            if (el('cfgPay_check').checked) pays.push('check');
+
+            const dels = [];
+            if (el('cfgDel_email').checked) dels.push('email');
+            if (el('cfgDel_print').checked) dels.push('print');
+
+            config.eventName = evn;
+            config.basePrice = bp;
+            config.additionalPrintPrice = ap;
+            config.maxPrints = mp;
+            config.maxEmails = me;
+            if (pays.length) config.paymentMethods = pays;
+            if (dels.length) config.deliveryMethods = dels;
+
+            window.enabledBackgrounds = window.enabledBackgrounds || {};
+            saveConfigToStorage();
+
+            // refresh dependent UI
+            if (typeof updateMethodButtons === 'function') updateMethodButtons();
+            loadBackgrounds();
+
+            closeConfigModal();
+        }
+
+        // Demo reprint flow (does not actually print)
+        let _reprintPending = null;
+        function showReprintModal(ticketId) {
+            _reprintPending = ticketId;
+            const txt = document.getElementById('reprintText');
+            if (txt) txt.textContent = `Reprint ticket ${ticketId}? This is a demo action.`;
+            const modal = document.getElementById('reprintModal');
+            if (modal) modal.style.display = 'flex';
+        }
+
+        function confirmReprint() {
+            const modal = document.getElementById('reprintModal');
+            if (modal) modal.style.display = 'none';
+            if (_reprintPending) {
+                // Demo feedback: small transient notice
+                const note = document.createElement('div');
+                note.style.cssText = 'position:fixed; bottom:20px; right:20px; background:#222; color:#fff; padding:12px 16px; border-radius:8px; z-index:20000; box-shadow:0 8px 20px rgba(0,0,0,0.3);';
+                note.textContent = `Reprint queued for ${_reprintPending}`;
+                document.body.appendChild(note);
+                setTimeout(() => note.remove(), 2500);
+                _reprintPending = null;
+            }
+        }
+
+        // Hide disabled backgrounds in chooser
+        const _origLoadBackgroundsForCategory = typeof loadBackgroundsForCategory === 'function' ? loadBackgroundsForCategory : null;
+        function loadBackgroundsForCategory(category) {
+            // If original exists earlier, keep its behavior but enforce enabledBackgrounds
+            const container = document.getElementById('backgroundOptions');
+            container.innerHTML = '';
+            const backgrounds = config.backgroundCategories[category] || [];
+            const enabled = window.enabledBackgrounds || {};
+            backgrounds.forEach(bg => {
+                if (enabled[String(bg.id)] === false) return;
+                const button = document.createElement('button');
+                button.className = 'touch-button';
+                button.onclick = (e) => selectBackground(bg, e);
+                button.innerHTML = `
+                    <div style="width: 60px; height: 40px; border-radius: 8px; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center;">${bg.preview}</div>
+                    <div>${bg.name}</div>`;
+                container.appendChild(button);
+            });
+        }
+
+        // Update visible payment/delivery buttons
+        function updateMethodButtons() {
+            const emailBtn = document.getElementById('emailBtn');
+            const printBtn = document.getElementById('printBtn');
+            if (emailBtn) emailBtn.style.display = config.deliveryMethods.includes('email') ? 'flex' : 'none';
+            if (printBtn) printBtn.style.display = config.deliveryMethods.includes('print') ? 'flex' : 'none';
+
+            const cashBtn = document.getElementById('cashBtn');
+            const cardBtn = document.getElementById('cardBtn');
+            const checkBtn = document.getElementById('checkBtn');
+            if (cashBtn) cashBtn.style.display = config.paymentMethods.includes('cash') ? 'flex' : 'none';
+            if (cardBtn) cardBtn.style.display = config.paymentMethods.includes('card') ? 'flex' : 'none';
+            if (checkBtn) checkBtn.style.display = config.paymentMethods.includes('check') ? 'flex' : 'none';
+        }
+
+        // initialize persisted config
+        loadSavedConfig();
+        window.enabledBackgrounds = window.enabledBackgrounds || {};
+    if (typeof updateMethodButtons === 'function') updateMethodButtons();
+
+    // Demo ticket history (simple signifiers for operator reprint demo)
+    const ticketHistory = [
+        { id: 'TCK-001', name: 'Alice M.', date: '2025-10-20 14:32', items: 'Print x2, Email x1' },
+        { id: 'TCK-002', name: 'Bob J.', date: '2025-10-21 11:05', items: 'Email x1' },
+        { id: 'TCK-003', name: 'Carol K.', date: '2025-10-22 16:48', items: 'Print x1' }
+    ];
+
+    function buildTicketHistory() {
+        const container = document.getElementById('cfgTicketHistory');
+        if (!container) return;
+        container.innerHTML = '';
+        ticketHistory.forEach(t => {
+            const row = document.createElement('div');
+            row.style.display = 'flex';
+            row.style.justifyContent = 'space-between';
+            row.style.alignItems = 'center';
+            row.style.padding = '8px';
+            row.style.borderBottom = '1px solid #eee';
+            row.innerHTML = `
+                <div style="display:flex;flex-direction:column; gap:2px;">
+                    <strong style="font-size:0.95rem;">${t.id} — ${t.name}</strong>
+                    <span style="font-size:0.85rem; color:#666;">${t.date} · ${t.items}</span>
+                </div>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <button class="nav-button" style="padding:8px 12px; border-radius:8px; background:#4CAF50; border:none; color:#fff;" onclick="showReprintModal('${t.id}')">Reprint</button>
+                </div>
+            `;
+            container.appendChild(row);
+        });
+    }
+
+        // Demo upload handling (in-memory only)
+        window.tempUploads = window.tempUploads || [];
+
+        function handleUploadFile(file) {
+            if (!file || !file.type.startsWith('image/')) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const dataUrl = e.target.result;
+                const item = { id: 'UP-' + Date.now(), name: file.name, dataUrl };
+                window.tempUploads.push(item);
+                buildTempUploadsUI();
+                buildCfgBackgroundList();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function buildTempUploadsUI() {
+            const list = document.getElementById('cfgUploadList');
+            if (!list) return;
+            list.innerHTML = '';
+            window.tempUploads.forEach(u => {
+                const el = document.createElement('div');
+                el.style.display = 'flex'; el.style.flexDirection = 'column'; el.style.alignItems = 'center'; el.style.gap = '6px'; el.style.width = '80px';
+                el.innerHTML = `
+                    <img src="${u.dataUrl}" alt="${u.name}" style="width:72px; height:72px; object-fit:cover; border-radius:6px; border:1px solid #ddd;" />
+                    <button class="nav-button" style="padding:6px 8px; font-size:0.85rem;" onclick="addUploadToBackground('${u.id}')">Add</button>
+                `;
+                list.appendChild(el);
+            });
+        }
+
+        function addUploadToBackground(uploadId) {
+            const up = window.tempUploads.find(x => x.id === uploadId);
+            if (!up) return;
+            // add uploaded image into the existing 'Other' category so it appears in the chooser
+            const targetCat = 'Other';
+            config.backgroundCategories[targetCat] = config.backgroundCategories[targetCat] || [];
+            const newId = -Date.now();
+            const bg = { id: newId, name: up.name || 'Uploaded', imageUrl: up.dataUrl, preview: `<img src="${up.dataUrl}" style="width:60px;height:40px;border-radius:4px;">` };
+            config.backgroundCategories[targetCat].push(bg);
+            buildCfgBackgroundList();
+        }
+
+        // wire upload input/button
+        setTimeout(() => {
+            const inp = document.getElementById('cfgUploadInput');
+            const btn = document.getElementById('cfgUploadBtn');
+            if (inp) inp.addEventListener('change', (ev) => handleUploadFile(ev.target.files[0]));
+            if (btn && inp) btn.addEventListener('click', () => { if (inp.files && inp.files[0]) handleUploadFile(inp.files[0]); else inp.click(); });
+        }, 120);
 
         // Session data
         let session = {
@@ -1141,18 +1596,20 @@
             const container = document.getElementById('backgroundOptions');
             container.innerHTML = '';
 
-            const backgrounds = config.backgroundCategories[category];
-            
+            const backgrounds = config.backgroundCategories[category] || [];
+            const enabled = window.enabledBackgrounds || {};
+
             backgrounds.forEach(bg => {
+                if (enabled[String(bg.id)] === false) return; // skip disabled
                 const button = document.createElement('button');
                 button.className = 'touch-button';
                 button.onclick = (e) => selectBackground(bg, e);
-                
+
                 button.innerHTML = `
                     <div style="width: 60px; height: 40px; border-radius: 8px; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center;">${bg.preview}</div>
                     <div>${bg.name}</div>
                 `;
-                
+
                 container.appendChild(button);
             });
         }
@@ -1184,7 +1641,7 @@
 
         function showCustomBackgroundInstructions() {
             const preview = document.getElementById('preview');
-            preview.innerHTML = '<div style="padding: 20px; text-align: center; color: #000;">📋 Give this number and custom image name to the photographer:<br><strong style="font-size: 2rem;">' + session.customerNumber + '</strong></div>';
+            preview.innerHTML = "<div style='padding: 20px; text-align: center; color: #000;'>📋 Give this number and the custom image you'd like to the photographer:<br><strong style='font-size: 2rem;'>" + session.customerNumber + "</strong></div>";
         }
 
         // People counter
@@ -1320,7 +1777,45 @@
                 
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(video, 0, 0);
-                
+
+                // Bake the customer number into the photo (centered horizontally, aligned near bottom)
+                try {
+                    const id = session.customerNumber || '';
+                    if (id) {
+                        // slightly smaller font than before; scales with image size
+                        const fontSize = Math.max(12, Math.round(Math.min(canvas.width, canvas.height) * 0.05));
+                        ctx.font = `bold ${fontSize}px sans-serif`;
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        const text = id;
+                        const metrics = ctx.measureText(text);
+                        const textWidth = metrics.width;
+                        const paddingX = Math.round(fontSize * 0.5);
+                        const paddingY = Math.round(fontSize * 0.4);
+                        const boxWidth = textWidth + paddingX * 2;
+                        const boxHeight = fontSize + paddingY * 2;
+
+                        const centerX = Math.round(canvas.width / 2);
+                        const marginFromBottom = Math.round(canvas.height * 0.04);
+                        const centerY = canvas.height - marginFromBottom - Math.round(boxHeight / 2);
+                        const boxX = centerX - Math.round(boxWidth / 2);
+                        const boxY = centerY - Math.round(boxHeight / 2);
+
+                        // Background box for contrast
+                        ctx.fillStyle = 'rgba(0,0,0,0.45)';
+                        ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
+
+                        // Text: stroke then fill for readability
+                        ctx.lineWidth = Math.max(1, Math.round(fontSize * 0.06));
+                        ctx.strokeStyle = 'rgba(0,0,0,0.6)';
+                        ctx.fillStyle = '#ffffff';
+                        ctx.strokeText(text, centerX, centerY);
+                        ctx.fillText(text, centerX, centerY);
+                    }
+                } catch (e) {
+                    console.warn('Failed to draw customer id on photo', e);
+                }
+
                 const imageData = canvas.toDataURL('image/jpeg', 0.8);
                 session.photoData = imageData;
                 
@@ -1334,7 +1829,14 @@
                 document.getElementById('cameraNext').disabled = false;
             } else {
                 session.photoTaken = true;
-                placeholder.innerHTML = '<span>📸 Photo Captured!<br>Looking great! 😊</span>';
+                // Show a friendly message but include the customer number so operator can match
+                const id = session.customerNumber || '';
+                placeholder.innerHTML = `
+                    <div style="width:100%;height:100%;position:relative;display:flex;align-items:center;justify-content:center;">
+                        <div style="text-align:center; padding: 12px;">📸 Photo Captured!<br>Looking great! 😊</div>
+                        ${id ? `<div style="position:absolute; left:50%; transform:translateX(-50%); bottom:12px; background: rgba(0,0,0,0.45); color:#fff; padding:6px 12px; border-radius:6px; font-weight:600;">${id}</div>` : ''}
+                    </div>
+                `;
                 placeholder.style.background = '#e8f5e8';
                 document.getElementById('retakeBtn').style.display = 'flex';
                 document.getElementById('cameraNext').disabled = false;
@@ -1581,12 +2083,28 @@
         document.addEventListener("mousemove", resetIdleTimer);
         document.addEventListener("click", resetIdleTimer);
 
+        // Accessibility toolbar positioning: avoid blocking important chrome (like the total)
+        function updateA11yPosition(screenId) {
+            try {
+                const toolbar = document.getElementById('a11yToolbar');
+                if (!toolbar) return;
+                // Keep the toolbar vertically centered on the left side of the screen
+                toolbar.style.left = '12px';
+                toolbar.style.right = 'auto';
+                toolbar.style.top = '50%';
+                toolbar.style.transform = 'translateY(-50%)';
+            } catch (e) { console.warn('updateA11yPosition failed', e); }
+        }
+
         // Hook into screen changes
         const originalShowScreen = showScreen;
         showScreen = function(screenId) {
             originalShowScreen(screenId);
            resetIdleTimer();
+           updateA11yPosition(screenId);
         };
+        // Ensure initial position is correct on load
+        try { updateA11yPosition(currentScreen); } catch (e) {}
 
         // Continue button cancels timeout
         document.getElementById("continueBtn").addEventListener("click", () => {
@@ -1606,6 +2124,159 @@
 	</div>
         </div>
 
+    <!-- Configuration Modal -->
+    <!-- Password / Operator PIN Modal -->
+    <div id="passwordModal" class="config-modal password-modal" role="dialog" aria-modal="true" aria-labelledby="pwdTitle">
+        <div class="config-box" id="passwordBox" style="max-width:420px;">
+            <button class="password-close" onclick="closePasswordModal()" aria-label="Close operator modal">✕</button>
+            <h3 id="pwdTitle" style="margin:0;">Operator Access</h3>
+            <p style="color:#555; margin-top:8px;">This area is for operators only. If you stumbled upon this, press the red X to exit and continue on.</p>
+            <div style="margin-top:12px;">
+                <input id="pwdInput" type="password" inputmode="numeric" pattern="[0-9]*" placeholder="Enter PIN" maxlength="8" style="width:100%; padding:12px; font-size:1.4rem; box-sizing:border-box;" />
+            </div>
+            <div id="pwdError" style="color:#c0392b; margin-top:8px; min-height:18px;"></div>
+            <div class="cfg-actions">
+                <button class="nav-button" onclick="verifyPasswordAndOpenConfig()">Unlock</button>
+            </div>
+        </div>
+    </div>
+    <div id="configModal" class="config-modal" role="dialog" aria-modal="true" aria-labelledby="cfgTitle">
+        <div class="config-box">
+            <h3 id="cfgTitle">Operator Settings</h3>
+            <div class="config-grid">
+                <div>
+                    <label>Event Name<br><input id="cfgEventName" type="text" style="width:100%; padding:8px; margin-top:6px;" /></label>
+                    <label style="display:block; margin-top:10px;">Base Price ($)<br><input id="cfgBasePrice" type="number" step="0.01" min="0" style="width:100%; padding:8px; margin-top:6px;" /></label>
+                    <label style="display:block; margin-top:10px;">Additional Print Price ($)<br><input id="cfgAdditionalPrintPrice" type="number" step="0.01" min="0" style="width:100%; padding:8px; margin-top:6px;" /></label>
+                </div>
+                <div>
+                    <label>Max Prints<br><input id="cfgMaxPrints" type="number" min="1" style="width:100%; padding:8px; margin-top:6px;" /></label>
+                    <label style="display:block; margin-top:10px;">Max Emails<br><input id="cfgMaxEmails" type="number" min="1" style="width:100%; padding:8px; margin-top:6px;" /></label>
+                    <div style="margin-top:12px;">
+                        <strong>Payment Methods</strong><br>
+                        <label><input id="cfgPay_cash" type="checkbox"> Cash</label>
+                        <label style="margin-left:8px;"><input id="cfgPay_card" type="checkbox"> Card</label>
+                        <label style="margin-left:8px;"><input id="cfgPay_check" type="checkbox"> Check</label>
+                    </div>
+                    <div style="margin-top:8px;">
+                        <strong>Delivery Methods</strong><br>
+                        <label><input id="cfgDel_email" type="checkbox"> Email</label>
+                        <label style="margin-left:8px;"><input id="cfgDel_print" type="checkbox"> Print</label>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top:12px;">
+                <strong>Backgrounds</strong>
+                <div id="cfgUploadArea" style="margin-top:8px; display:flex; gap:8px; align-items:center;">
+                    <input id="cfgUploadInput" type="file" accept="image/*" style="flex:1;" />
+                    <button id="cfgUploadBtn" class="nav-button" style="padding:8px 12px;">Upload</button>
+                </div>
+                <div id="cfgUploadList" style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;"></div>
+                <div id="cfgBackgroundList" style="margin-top:8px;"></div>
+            </div>
+
+            <div style="margin-top:18px;">
+                <strong>Ticket History (Demo)</strong>
+                <div id="cfgTicketHistory" style="max-height:200px; overflow:auto; border:1px solid #eee; padding:8px; border-radius:6px; margin-top:8px; background:#fafafa;">
+                    <!-- Ticket rows populated by JS for demo -->
+                </div>
+            </div>
+
+            <div class="cfg-actions">
+                <button class="nav-button" onclick="closeConfigModal()">Cancel</button>
+                <button class="nav-button" onclick="applyConfig()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Accessibility controls: font size only (zoom removed)
+        (function() {
+            const STORAGE_KEY = 'kiosk_access_v1';
+            const defaults = { fontScale: 1.0 };
+            let state = Object.assign({}, defaults);
+
+            function load() {
+                try {
+                    const raw = localStorage.getItem(STORAGE_KEY);
+                    if (!raw) return;
+                    const parsed = JSON.parse(raw);
+                    if (parsed && typeof parsed === 'object') state = Object.assign({}, defaults, parsed);
+                } catch (e) { console.warn('Load accessibility settings failed', e); }
+            }
+
+            function save() {
+                try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) { console.warn('Save accessibility failed', e); }
+            }
+
+            // Apply font scaling to all elements consistently (stores a base computed font size)
+            function applyFontScaling() {
+                    const all = document.querySelectorAll('body *');
+                    all.forEach(el => {
+                        try {
+                            // Skip elements inside the accessibility toolbar so controls remain stable
+                            if (el.closest && el.closest('#a11yToolbar')) return;
+                            if (!el.dataset.baseFontSize) {
+                                const cs = window.getComputedStyle(el);
+                                const f = parseFloat(cs.fontSize) || 16;
+                                el.dataset.baseFontSize = String(f);
+                            }
+                            const base = parseFloat(el.dataset.baseFontSize) || 16;
+                            el.style.fontSize = Math.max(10, Math.round(base * state.fontScale)) + 'px';
+                        } catch (e) {
+                            // ignore elements that can't be styled
+                        }
+                    });
+                const sizeRoot = Math.max(12, Math.round(16 * state.fontScale));
+                document.documentElement.style.setProperty('--app-base-font-size', sizeRoot + 'px');
+            }
+
+            function apply() {
+                // Only apply the font scaling; zoom feature removed
+                applyFontScaling();
+            }
+
+            function clamp() {
+                state.fontScale = Math.min(1.8, Math.max(0.7, state.fontScale));
+            }
+
+            function incFont() { state.fontScale = +(state.fontScale + 0.1).toFixed(2); clamp(); apply(); save(); }
+            function decFont() { state.fontScale = +(state.fontScale - 0.1).toFixed(2); clamp(); apply(); save(); }
+            function resetAll() { state = Object.assign({}, defaults); apply(); save(); }
+
+            load(); apply();
+
+            // Wire buttons
+            const elFontInc = document.getElementById('a11yFontInc');
+            const elFontDec = document.getElementById('a11yFontDec');
+            const elReset = document.getElementById('a11yReset');
+            const elToggle = document.getElementById('a11yToggle');
+            const elPanel = document.getElementById('a11yPanel');
+
+            if (elFontInc) elFontInc.addEventListener('click', incFont);
+            if (elFontDec) elFontDec.addEventListener('click', decFont);
+            if (elReset) elReset.addEventListener('click', resetAll);
+
+            // Toggle panel visibility behind the accessibility icon
+            if (elToggle && elPanel) {
+                elToggle.addEventListener('click', () => {
+                    const showing = elPanel.style.display === 'block' || elPanel.style.display === 'flex';
+                    elPanel.style.display = showing ? 'none' : 'block';
+                    elToggle.setAttribute('aria-expanded', String(!showing));
+                });
+            }
+
+            // Keyboard shortcuts: + to increase font, - to decrease font
+            document.addEventListener('keydown', (ev) => {
+                if (ev.key === '+' || ev.key === '=' ) {
+                    incFont();
+                } else if (ev.key === '-' || ev.key === '_') {
+                    decFont();
+                }
+            });
+        })();
+    </script>
 </body>
 </html>
 ```
