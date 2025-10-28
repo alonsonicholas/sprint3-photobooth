@@ -219,6 +219,7 @@
             padding: 15px 30px;
             box-sizing: border-box;
             z-index: 2000;
+            transition: transform 0.25s ease;
         }
         
         .nav-button {
@@ -498,14 +499,14 @@
 </head>
 <body>
     <!-- Accessibility toggle + panel -->
-    <div id="a11yToolbar" style="position:fixed; left:12px; top:50%; transform:translateY(-50%); z-index:16000;">
+    <div id="a11yToolbar" class="move-with-vk" style="position:fixed; left:12px; bottom:112px; transform:none; z-index:18000;">
         <!-- Much larger touch-friendly accessibility toggle with inline SVG (person with raised arms) -->
-        <button id="a11yToggle" aria-expanded="false" aria-controls="a11yPanel" aria-label="Open accessibility options" class="nav-button" 
-                style="background:#0b3b66;color:#fff;border:none;border-radius:16px;padding:8px; width:110px; height:110px; display:inline-flex; align-items:center; justify-content:center; box-shadow:0 12px 30px rgba(0,0,0,0.35); touch-action:manipulation; -webkit-tap-highlight-color: transparent;">
-            <!-- PNG accessibility icon (person with raised arms) from Wikimedia Commons -->
-            <img id="a11yIconImg" src="https://uxwing.com/wp-content/themes/uxwing/download/web-app-development/accessibility-icon.png" alt="Accessibility options" style="width:76px; height:76px; object-fit:contain; display:block;" />
+            <button id="a11yToggle" aria-expanded="false" aria-controls="a11yPanel" aria-label="Open accessibility options" class="nav-button" 
+                style="background:#0b3b66;color:#fff;border:none;border-radius:16px;padding:8px; width:94px; height:94px; display:inline-flex; align-items:center; justify-content:center; box-shadow:0 12px 30px rgba(0,0,0,0.35); touch-action:manipulation; -webkit-tap-highlight-color: transparent;">
+            <!-- Simple text icon for accessibility (text size) -->
+            <span id="a11yIconText" aria-hidden="true" style="font-size:34px; font-weight:700; line-height:1; color:#fff; display:block; font-family: 'Segoe UI', Roboto, Arial, sans-serif;">aA</span>
         </button>
-    <div id="a11yPanel" style="display:none; position:absolute; left:0; top:120px; margin-left:0; background:rgba(255,255,255,0.98); padding:8px; border-radius:10px; box-shadow:0 10px 30px rgba(0,0,0,0.18); width:140px;">
+    <div id="a11yPanel" style="display:none; position:absolute; left:0; bottom:calc(100% + 8px); top:auto; margin-left:0; background:rgba(255,255,255,0.98); padding:8px; border-radius:10px; box-shadow:0 10px 30px rgba(0,0,0,0.18); width:160px;">
         <div style="display:flex; flex-direction:column; gap:10px; align-items:stretch; justify-content:center;">
             <button id="a11yFontDec" aria-label="Decrease font size" title="Decrease font size" class="nav-button" 
                 style="background:#111;color:#fff;border:none;border-radius:10px;padding:14px;font-size:1.25rem;width:100%;min-height:56px;display:inline-flex;align-items:center;justify-content:center;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">A-</button>
@@ -524,6 +525,48 @@
                     <button class="nav-button" onclick="confirmReprint()" style="background:#667eea; color:white; border:none;">Confirm</button>
                     <button class="nav-button" onclick="document.getElementById('reprintModal').style.display='none'" style="background:#ccc; color:#222;">Cancel</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- (confirmPrint moved inline into the receipt screen) -->
+    
+    <!-- Order confirmation screen (pre-receipt) - show only user-entered inputs -->
+    <div class="screen" id="confirmOrder" style="display:none;">
+        <button class="quit-button" onclick="quitSession()">✕ Quit</button>
+        <div class="header">
+            <h2>Confirm Your Order</h2>
+            <div class="progress-bar"><div class="progress-fill" style="width: 100%"></div></div>
+        </div>
+        <div class="content" style="overflow-y:auto; justify-content:flex-start; padding-top:10px;">
+            <div style="max-width:640px; width:min(92%,640px); min-height:480px; margin: 0 auto; background: white; padding:30px; border-radius:12px; color:#222; box-shadow: 0 12px 34px rgba(0,0,0,0.08); font-size:1.30rem; line-height:1.4;">
+                    <h3 style="margin-top:0; font-size:1.25rem;">Confirm Your Ticket</h3>
+                    <div style="display:grid; grid-template-columns: 1fr 300px; gap:12px; font-size:0.98rem; color:#333; align-items:start;">
+                        <div>
+                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                                <div><strong>Name</strong><div id="confirmOrderName" style="font-size:1.36rem; font-weight:600;">—</div></div>
+                                <div><strong>People</strong><div id="confirmOrderPeople">1</div></div>
+                                <div><strong>Background</strong><div id="confirmBackground">N/A</div></div>
+                                <div><strong>Prints</strong><div id="confirmOrderPrints">0</div></div>
+                                <div><strong>Emails</strong><div id="confirmOrderEmails">N/A</div></div>
+                                <div><strong>Payment</strong><div id="confirmOrderPayment">N/A</div></div>
+                                <div><strong>Total</strong><div>$<span id="confirmTotal" style="font-size:1.28rem; font-weight:700;">0.00</span></div></div>
+                            </div>
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:8px; align-items:center;">
+                            <div style="font-weight:600; margin-bottom:6px;">Preview</div>
+                            <div id="confirmPreview" style="width:240px; height:180px; border-radius:8px; overflow:hidden; background:#f0f0f0; display:flex; align-items:center; justify-content:center; color:#666;">No photo</div>
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:12px;">
+                        <button class="nav-button" onclick="showScreen('payment')" style="background:#ccc;color:#222;">Cancel</button>
+                        <button class="nav-button" onclick="doPrintTicket()" style="background:#667eea;color:#fff;">Confirm & Print</button>
+                    </div>
+                </div>
+            </div>
+            <div class="navigation" style="margin-top:18px;">
+                <button class="nav-button" onclick="showScreen('payment')">← Back</button>
+                <button class="nav-button" onclick="confirmAndPopupPrint()" style="background:#667eea;color:#fff;">Confirm & Continue</button>
             </div>
         </div>
     </div>
@@ -683,7 +726,7 @@
                 </div>
             </div>
             <div class="content">
-                <input type="text" class="email-input" id="customerName" placeholder="Your Name" maxlength="50">
+                <input type="text" class="email-input needs-virtual-keyboard" id="customerName" placeholder="Your Name" maxlength="50">
 
                 <div class="navigation">
                     <button class="nav-button" onclick="goBack()">← Back</button>
@@ -862,11 +905,13 @@
                     <p style="margin: 0; font-size: 1.2rem; color: #333;">Your receipt is being printed now. Please collect it and hand it to the photographer.</p>
                 </div>
                 
-                <div style="margin-top: 30px; display: flex; justify-content: center;">
-                    <button class="touch-button" onclick="showScreen('instructions')" style="max-width: 400px;">
-                        <div class="emoji">→</div>
-                        <div>Next</div>
-                    </button>
+                <div style="margin-top: 30px; display:flex; justify-content:center;">
+                    <div style="display:flex; gap:12px;">
+                        <button class="touch-button" onclick="showScreen('instructions')" style="max-width: 200px;">
+                            <div class="emoji">→</div>
+                            <div>Next</div>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1008,8 +1053,427 @@
             }
         });
     </script>
-    <script>
-        // Configuration (would be loaded from external file)
+        <!-- Virtual on-screen keyboard (appears for inputs with class 'needs-virtual-keyboard') -->
+        <style>
+            /* Virtual keyboard: iOS / Apple-like visual style */
+            .virtual-keyboard {
+                position: fixed;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                z-index: 17000;
+                background: linear-gradient(#f8f8f8, #ffffff);
+                color: #000;
+                padding: 12px 10px 18px;
+                box-shadow: 0 -12px 30px rgba(0,0,0,0.08);
+                border-top-left-radius: 18px;
+                border-top-right-radius: 18px;
+                -webkit-font-smoothing: antialiased;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+            }
+            .vk-row { display:flex; gap:12px; justify-content:center; margin-bottom:12px; }
+            .vk-key {
+                background: linear-gradient(#ffffff, #f5f6f8);
+                border: 1px solid rgba(0,0,0,0.06);
+                color: #000;
+                padding: 16px 14px;
+                min-width: 60px;
+                border-radius: 12px;
+                font-size: 20px;
+                line-height: 1;
+                text-align: center;
+                user-select: none;
+                touch-action: manipulation;
+                box-shadow: 0 3px 0 rgba(0,0,0,0.04), inset 0 -1px 0 rgba(0,0,0,0.02);
+                transition: transform 80ms ease, background 80ms ease, box-shadow 80ms ease;
+            }
+            .vk-key.wide { min-width: 140px; border-radius: 14px; }
+            .vk-key.space { min-width: 420px; border-radius: 14px; }
+            .vk-key.active {
+                background: linear-gradient(#e9f2ff, #d9eaff);
+                border-color: rgba(34,122,255,0.35);
+                box-shadow: 0 1px 0 rgba(0,0,0,0.02), inset 0 -1px 0 rgba(255,255,255,0.6);
+            }
+            .vk-key:active { transform: translateY(1px) scale(0.998); box-shadow:none; }
+            .vk-key[aria-pressed='true'] { background: #e6f0ff; }
+            .vk-hidden { display: none !important; }
+            /* slightly larger spacing for the bottom row to emulate iOS keyboard gutters */
+            #vk-row-4 { padding-bottom: 6px; }
+        </style>
+        <div id="virtualKeyboard" class="virtual-keyboard" style="display:none;" aria-hidden="true" role="application" aria-label="On screen keyboard">
+            <div class="vk-row" id="vk-row-1"></div>
+            <div class="vk-row" id="vk-row-2"></div>
+            <div class="vk-row" id="vk-row-3"></div>
+            <div class="vk-row" id="vk-row-4"></div>
+            <div class="vk-row" id="vk-row-5"></div>
+        </div>
+        <script>
+            (function(){
+                // QWERTY-like layout (rows arranged like a traditional keyboard)
+                const layout = {
+                    row1: ['1','2','3','4','5','6','7','8','9','0','-','='],
+                    row2: ['q','w','e','r','t','y','u','i','o','p'],
+                    row3: ['a','s','d','f','g','h','j','k','l',';','\''],
+                    row4: ['z','x','c','v','b','n','m',',','.','/']
+                };
+                const vk = document.getElementById('virtualKeyboard');
+                let vkTarget = null;
+                let vkShift = false;
+
+                function build() {
+                    const r1 = document.getElementById('vk-row-1');
+                    const r2 = document.getElementById('vk-row-2');
+                    const r3 = document.getElementById('vk-row-3');
+                    const r4 = document.getElementById('vk-row-4');
+                    const r5 = document.getElementById('vk-row-5');
+                    r1.innerHTML = '';
+                    r2.innerHTML = '';
+                    r3.innerHTML = '';
+                    r4.innerHTML = '';
+                    r5.innerHTML = '';
+
+                    // Row 1: numbers and top symbols
+                    layout.row1.forEach(k => r1.appendChild(makeKey(k)));
+
+                    // Row 2: Q W E R T Y U I O P (Backspace placed to the right of 'p')
+                    layout.row2.forEach(k => r2.appendChild(makeKey(k)));
+                    const bksp = makeKey('⌫', 'wide'); bksp.addEventListener('click', onBackspace); r2.appendChild(bksp);
+
+                    // Row 3: A-L and punctuation, Enter on the right
+                    layout.row3.forEach(k => r3.appendChild(makeKey(k)));
+                    const enter = makeKey('Enter', 'wide'); enter.addEventListener('click', onEnter); r3.appendChild(enter);
+
+                    // Row 4: Shift (left), Z-M and punctuation (single left Shift only)
+                    const shiftLeftRow = makeKey('Shift', 'wide'); shiftLeftRow.addEventListener('click', onShift); r4.appendChild(shiftLeftRow);
+                    layout.row4.forEach(k => r4.appendChild(makeKey(k)));
+
+                    // Row 5: Space and Hide (bottom row)
+                    const space = makeKey('Space', 'space'); space.addEventListener('click', onSpace); r5.appendChild(space);
+                    const at = makeKey('@'); r5.appendChild(at);
+                    const hide = makeKey('Hide', 'wide'); hide.addEventListener('click', hideVirtualKeyboard); r5.appendChild(hide);
+                }
+
+                function makeKey(label, extra) {
+                    const d = document.createElement('button');
+                    d.type = 'button';
+                    d.className = 'vk-key' + (extra ? ' ' + extra : '');
+                    d.textContent = label;
+                    d.setAttribute('aria-label', label);
+                    d.addEventListener('click', () => onKey(label));
+                    return d;
+                }
+
+                function onKey(label) {
+                    if (!vkTarget) return;
+                    if (label === 'Shift' || label === 'Tab' || label === 'Enter' || label === 'Space' || label === 'Hide' || label === '⌫') return;
+                    let ch = label;
+                    if (vkShift) ch = ch.toUpperCase();
+                    // Insert using caret-preserving helper which will honor any previously-captured caret
+                    insertTextAtCursor(vkTarget, ch);
+                    // if shift was single-use, turn off
+                    if (vkShift) { vkShift = false; refreshShiftState(); }
+                    // keep focus but avoid an extra focus() call here which can move caret on some platforms
+                }
+
+                function onBackspace() {
+                    if (!vkTarget) return;
+                    const el = vkTarget;
+                    try {
+                        // honor any previously-captured caret position
+                        if (window._vkDesiredCaret && window._vkDesiredCaret.el === el && typeof window._vkDesiredCaret.start === 'number') {
+                            try { el.setSelectionRange(window._vkDesiredCaret.start, window._vkDesiredCaret.end ?? window._vkDesiredCaret.start); } catch (e) {}
+                            window._vkDesiredCaret = null;
+                        }
+
+                        if (typeof el.selectionStart === 'number') {
+                            let start = el.selectionStart;
+                            let end = el.selectionEnd;
+                            if (start === end && start > 0) {
+                                el.value = el.value.slice(0, start - 1) + el.value.slice(end);
+                                el.selectionStart = el.selectionEnd = start - 1;
+                            } else if (start !== end) {
+                                el.value = el.value.slice(0, start) + el.value.slice(end);
+                                el.selectionStart = el.selectionEnd = start;
+                            }
+                        } else {
+                            el.value = el.value.slice(0, -1);
+                        }
+                    } catch (e) {
+                        // fallback: pop last char
+                        el.value = el.value.slice(0, -1);
+                    }
+                    // keep focus and emit input
+                    try { el.focus(); } catch (e) {}
+                    el.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+
+                function onSpace() { if (vkTarget) { insertTextAtCursor(vkTarget, ' '); vkTarget.focus(); vkTarget.dispatchEvent(new Event('input',{bubbles:true})); } }
+                function onEnter() {
+                    if (!vkTarget) return;
+                    // If we're on the password field, try submit
+                    if (vkTarget.id === 'pwdInput') {
+                        verifyPasswordAndOpenConfig();
+                    } else {
+                        focusNextInput(vkTarget);
+                    }
+                }
+                function onTab() { focusNextInput(vkTarget); }
+
+                function onShift() { vkShift = !vkShift; refreshShiftState(); }
+                function refreshShiftState() {
+                    document.querySelectorAll('.vk-key').forEach(k => {
+                        // update letter case
+                        if (k.textContent.length === 1 && /[a-zA-Z]/.test(k.textContent)) {
+                            k.textContent = vkShift ? k.textContent.toUpperCase() : k.textContent.toLowerCase();
+                        }
+                        // mark shift keys with aria-pressed
+                        if (k.textContent === 'Shift') {
+                            k.setAttribute('aria-pressed', String(!!vkShift));
+                        }
+                    });
+                    document.querySelectorAll('.vk-key').forEach(k => k.classList.remove('active'));
+                    if (vkShift) {
+                        document.querySelectorAll('.vk-key').forEach(k => { if (k.textContent.length === 1 && /[A-Z]/.test(k.textContent)) k.classList.add('active'); });
+                    }
+                }
+
+                function focusNextInput(current) {
+                    const list = Array.from(document.querySelectorAll('.needs-virtual-keyboard'));
+                    const idx = list.indexOf(current);
+                    if (idx >= 0 && idx < list.length - 1) {
+                        list[idx + 1].focus();
+                    } else {
+                        // otherwise hide
+                        hideVirtualKeyboard();
+                    }
+                }
+
+                function insertTextAtCursor(el, text) {
+                    try {
+                        // Ensure target has focus, but don't rely on focus() alone to set caret correctly on some browsers
+                        try { el.focus({ preventScroll: true }); } catch (e) { try { el.focus(); } catch (e) {} }
+
+                        // If we previously captured a desired caret for this element (from pointerup), honor it now
+                        if (window._vkDesiredCaret && window._vkDesiredCaret.el === el && typeof window._vkDesiredCaret.start === 'number') {
+                            try {
+                                el.setSelectionRange(window._vkDesiredCaret.start, window._vkDesiredCaret.end ?? window._vkDesiredCaret.start);
+                            } catch (e) { /* ignore if unsupported */ }
+                            // clear saved caret now that we're using it
+                            window._vkDesiredCaret = null;
+                        }
+
+                        if (typeof el.selectionStart === 'number') {
+                            const start = el.selectionStart;
+                            const end = el.selectionEnd;
+                            el.value = el.value.slice(0, start) + text + el.value.slice(end);
+                            const newPos = start + text.length;
+                            try { el.setSelectionRange(newPos, newPos); } catch (e) { el.selectionStart = el.selectionEnd = newPos; }
+                        } else {
+                            el.value += text;
+                        }
+                        el.dispatchEvent(new Event('input', { bubbles: true }));
+                    } catch (e) { console.warn('VK insert failed', e); }
+                }
+
+                // Estimate caret index inside a single-line input from a clientX coordinate.
+                // Uses canvas.measureText with the input's computed font to approximate character widths.
+                function estimateCaretIndexFromClientX(inputEl, clientX) {
+                    try {
+                        if (!inputEl || typeof clientX !== 'number') return 0;
+                        const rect = inputEl.getBoundingClientRect();
+                        const style = window.getComputedStyle(inputEl);
+                        const font = style.font || [style.fontStyle, style.fontVariant, style.fontWeight, style.fontSize, style.fontFamily].filter(Boolean).join(' ');
+                        // Compute left padding and border to find content start
+                        const paddingLeft = parseFloat(style.paddingLeft || 0) || 0;
+                        const borderLeft = parseFloat(style.borderLeftWidth || 0) || 0;
+                        const contentLeft = rect.left + paddingLeft + borderLeft;
+                        let relativeX = clientX - contentLeft;
+                        if (relativeX < 0) relativeX = 0;
+                        // Use canvas to measure text width
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        ctx.font = font || '16px Arial';
+                        const val = inputEl.value || '';
+                        // Walk characters and measure cumulative width until we exceed relativeX
+                        let cum = 0;
+                        for (let i = 0; i <= val.length; i++) {
+                            const slice = val.slice(0, i);
+                            const metrics = ctx.measureText(slice);
+                            const w = metrics.width;
+                            if (w >= relativeX) return i;
+                            cum = w;
+                        }
+                        return val.length;
+                    } catch (e) { return 0; }
+                }
+
+                function showVirtualKeyboard(target) {
+                    vkTarget = target || document.activeElement;
+                    if (!vkTarget) return;
+                    vk.style.display = 'block';
+                    vk.setAttribute('aria-hidden','false');
+                    // small delay to ensure mobile-like behavior
+                    setTimeout(() => { try {
+                            // Only focus if the target isn't already the active element —
+                            // refocusing can move the caret to the end and prevent placing the cursor where the user tapped.
+                            if (document.activeElement !== vkTarget) vkTarget.focus();
+                        } catch (e) {} }, 10);
+                    // after keyboard is visible, move bottom controls up to remain above it
+                    setTimeout(() => {
+                        try { moveBottomControls(true); } catch (e) { /* ignore */ }
+                    }, 80);
+                    // If the user tapped inside the target input recently, restore caret (with coordinate fallback)
+                    setTimeout(() => {
+                        try {
+                            if (!window._vkDesiredCaret || window._vkDesiredCaret.el !== vkTarget) return;
+                            // If we have numeric indices use them
+                            if (typeof window._vkDesiredCaret.start === 'number') {
+                                try { vkTarget.setSelectionRange(window._vkDesiredCaret.start, window._vkDesiredCaret.end ?? window._vkDesiredCaret.start); } catch (e) { /* ignore */ }
+                                window._vkDesiredCaret = null;
+                                return;
+                            }
+                            // Fallback: if we captured pointer coordinates, estimate a caret index from the X coordinate
+                            if (typeof window._vkDesiredCaret.coordX === 'number') {
+                                try {
+                                    const idx = estimateCaretIndexFromClientX(vkTarget, window._vkDesiredCaret.coordX);
+                                    if (typeof idx === 'number') {
+                                        try { vkTarget.setSelectionRange(idx, idx); } catch (e) { /* ignore */ }
+                                    }
+                                } catch (e) { /* ignore */ }
+                                window._vkDesiredCaret = null;
+                                return;
+                            }
+                        } catch (e) { /* ignore */ }
+                    }, 120);
+                }
+
+                function hideVirtualKeyboard() {
+                    vk.style.display = 'none';
+                    vk.setAttribute('aria-hidden','true');
+                    vkTarget = null; vkShift = false; refreshShiftState();
+                    try { moveBottomControls(false); } catch (e) {}
+                }
+
+                // Move bottom controls (navigation, quit button, total box) above the keyboard
+                function moveBottomControls(up) {
+                    // Only move bottom navigation rows; do not shift top-of-screen controls like quit or totalBox
+                    const selectors = ['.navigation', '.move-with-vk'];
+                    const els = selectors.map(s => Array.from(document.querySelectorAll(s))).flat();
+                    if (!els || !els.length) return;
+                    if (up) {
+                        // Use actual rendered height of VK
+                        const rect = vk.getBoundingClientRect();
+                        const h = Math.round(rect.height || 360);
+                        els.forEach(el => {
+                            // Ensure a smooth transition
+                            el.style.transition = el.style.transition || 'transform 0.25s ease';
+                            // Move up by keyboard height so they remain visible (negative Y)
+                            el.style.transform = `translateY(-${h}px)`;
+                        });
+                    } else {
+                        els.forEach(el => {
+                            el.style.transform = '';
+                        });
+                    }
+                }
+
+                // Track pointer downs so blurs caused by interacting with the keyboard don't auto-close it
+                let lastPointerDownInsideVK = false;
+                document.addEventListener('pointerdown', (ev) => {
+                    try { lastPointerDownInsideVK = !!ev.target.closest && !!ev.target.closest('.virtual-keyboard'); } catch (e) { lastPointerDownInsideVK = false; }
+                    // If keyboard is visible and the pointer down is outside both the keyboard and any input-like element, hide it.
+                    if (vk.style.display === 'block') {
+                        const clickedVK = ev.target.closest && ev.target.closest('.virtual-keyboard');
+                        const clickedNeedsVK = ev.target.closest && ev.target.closest('.needs-virtual-keyboard');
+                        const clickedEmailArea = ev.target.closest && ev.target.closest('#emailInputs');
+                        const tag = ev.target && ev.target.tagName ? ev.target.tagName.toUpperCase() : '';
+                        const clickedInputLike = clickedNeedsVK || clickedEmailArea || tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+                        if (!clickedVK && !clickedInputLike) {
+                            hideVirtualKeyboard();
+                        }
+                    }
+                }, true);
+
+                // Remember caret position when user taps (pointerup) into an input using the virtual keyboard
+                window._vkDesiredCaret = null;
+                document.addEventListener('pointerup', (ev) => {
+                    try {
+                        const t = ev.target;
+                        if (!t) return;
+                        // if the target is an input or textarea that uses the VK, record selection
+                        const isVKInput = t.matches && (t.matches('input.needs-virtual-keyboard') || t.matches('textarea.needs-virtual-keyboard'));
+                        if (isVKInput) {
+                            try {
+                                const start = (typeof t.selectionStart === 'number') ? t.selectionStart : null;
+                                const end = (typeof t.selectionEnd === 'number') ? t.selectionEnd : start;
+                                // capture pointer coordinates as a fallback if selection indices are not provided reliably
+                                const coordX = (typeof ev.clientX === 'number') ? ev.clientX : null;
+                                const coordY = (typeof ev.clientY === 'number') ? ev.clientY : null;
+                                if (start !== null) {
+                                    window._vkDesiredCaret = { el: t, start: start, end: end };
+                                } else if (coordX !== null) {
+                                    // store coord fallback; we'll resolve to an index when showing the keyboard
+                                    window._vkDesiredCaret = { el: t, coordX: coordX, coordY: coordY };
+                                }
+                            } catch (e) { window._vkDesiredCaret = null; }
+                        }
+                    } catch (e) { /* ignore */ }
+                }, true);
+
+                // Attach auto-show to focus events for inputs with class
+                document.addEventListener('focusin', (ev) => {
+                    const t = ev.target;
+                    if (!t) return;
+                    if (t.classList && t.classList.contains('needs-virtual-keyboard')) {
+                        showVirtualKeyboard(t);
+                    }
+                });
+
+                document.addEventListener('focusout', (ev) => {
+                    const t = ev.target;
+                    if (!t) return;
+                    // hide on blur after a short delay so clicks on VK keys still register
+                    setTimeout(() => {
+                        // if the last pointerdown was inside the virtual keyboard, don't hide (user interacted with keyboard area)
+                        if (lastPointerDownInsideVK) { lastPointerDownInsideVK = false; return; }
+                        if (!document.activeElement || !document.activeElement.classList || !document.activeElement.classList.contains('needs-virtual-keyboard')) {
+                            // if focus did not move into another needs-virtual-keyboard input, and focus isn't inside the keyboard, hide
+                            if (!document.activeElement || !document.activeElement.closest || !document.activeElement.closest('.virtual-keyboard')) hideVirtualKeyboard();
+                        }
+                    }, 120);
+                });
+
+                // Build keyboard on startup
+                build();
+
+                // Expose for other code
+                window.showVirtualKeyboard = showVirtualKeyboard;
+                window.hideVirtualKeyboard = hideVirtualKeyboard;
+            })();
+            </script>
+
+            <style>
+                /* Global typography: normalize and enlarge text for better readability.
+                   Uses !important to override inline sizes where necessary in this single-file app. */
+                :root{ --base-font: 20px; --h1:32px; --h2:24px; --h3:20px; --body-line:1.45; }
+                body, .kiosk-container, .screen, .content, .receipt, .header { font-size: var(--base-font) !important; line-height: var(--body-line) !important; }
+                h1 { font-size: var(--h1) !important; }
+                h2 { font-size: var(--h2) !important; }
+                h3 { font-size: var(--h3) !important; }
+                p, label, div, span { font-size: var(--base-font) !important; }
+                button, .nav-button, .touch-button { font-size: 18px !important; }
+                input, textarea, select, .email-input { font-size: 18px !important; }
+                .vk-key { font-size: 20px !important; padding: 18px 14px !important; }
+                /* Emphasize confirmation name/total but keep sizes consistent */
+                #confirmOrderName { font-size: 1.6rem !important; font-weight: 600 !important; }
+                #confirmTotal { font-size: 1.4rem !important; font-weight: 700 !important; }
+                /* Ensure receipt/operator copies remain readable */
+                .receipt-section { font-size: 18px !important; }
+                /* Accessibility: prefer no animation here; dropdown will appear above the button. */
+            </style>
+
+        <script>
+            // Configuration (would be loaded from external file)
         const config = {
             eventName: "Festival 2025",
             basePrice: 5.00,
@@ -1391,12 +1855,36 @@
 
         // Screen navigation
         function showScreen(screenId) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById(screenId).classList.add('active');
-            currentScreen = screenId;
+            try {
+                // hide all screens explicitly (clear any inline display styles)
+                document.querySelectorAll('.screen').forEach(s => { s.classList.remove('active'); s.style.display = 'none'; });
+                const el = document.getElementById(screenId);
+                if (!el) {
+                    console.warn('showScreen: target not found', screenId);
+                    const fallback = document.getElementById('welcome');
+                    if (fallback) { fallback.classList.add('active'); fallback.style.display = 'flex'; currentScreen = 'welcome'; }
+                    return;
+                }
+                // mark active and ensure it's visible
+                el.classList.add('active');
+                el.style.display = 'flex';
+                currentScreen = screenId;
+                // Ensure the accessibility panel is positioned correctly when screens change
+                try {
+                    const panel = document.getElementById('a11yPanel');
+                    // if the panel is open, keep it aligned above the button (no animation)
+                    if (panel && panel.style.display === 'block') {
+                        panel.style.left = '0px';
+                        panel.style.bottom = 'calc(100% + 8px)';
+                    }
+                } catch (e) { /* ignore */ }
+            } catch (e) {
+                console.error('showScreen error', e);
+                return;
+            }
             
             const totalBox = document.getElementById('totalBox');
-            const visibleScreens = ['background','people','delivery','emailCount','printCount','payment','nameEntry','emailEntry','camera'];
+            const visibleScreens = ['background','people','delivery','emailCount','printCount','payment','nameEntry','emailEntry','camera','confirmOrder'];
             if (visibleScreens.includes(screenId)) {
                 totalBox.style.display = 'block';
             } else {
@@ -1538,13 +2026,19 @@
                 'nameEntry': hasEmail ? 'emailEntry' : 'camera',
                 'emailEntry': 'camera',
                 'camera': 'payment',
-                'payment': 'receipt'
+                // show confirmation BEFORE showing receipt so user can verify details
+                'payment': 'receipt',
             };
             
             if (screens[currentScreen]) {
                 const next = screens[currentScreen];
+                // Intercept transition from payment -> receipt to show an order confirmation first
+                if (currentScreen === 'payment' && next === 'receipt') {
+                    showOrderConfirmation();
+                    return;
+                }
                 showScreen(next);
-                
+
                 if (next === 'emailEntry') {
                     setupEmailInputs();
                 } else if (next === 'camera') {
@@ -1717,6 +2211,22 @@
             session.name = this.value.trim();
             document.getElementById('nameNext').disabled = session.name.length === 0;
         });
+        // Add pointer-based caret placement for the name input too (parity & robustness)
+        (function(){
+            const nameEl = document.getElementById('customerName');
+            if (nameEl) {
+                nameEl.addEventListener('pointerdown', (ev) => {
+                    try {
+                        // compute approximate caret index and apply immediately
+                        const idx = estimateCaretIndexFromClientX(nameEl, ev.clientX);
+                        if (typeof idx === 'number') {
+                            try { nameEl.setSelectionRange(idx, idx); } catch (e) {}
+                            window._vkDesiredCaret = { el: nameEl, start: idx, end: idx };
+                        }
+                    } catch (e) { /* ignore */ }
+                }, true);
+            }
+        })();
 
         // Email entry
         function setupEmailInputs() {
@@ -1727,9 +2237,22 @@
             for (let i = 0; i < session.emailCount; i++) {
                 const input = document.createElement('input');
                 input.type = 'email';
-                input.className = 'email-input';
+                input.className = 'email-input needs-virtual-keyboard';
                 input.placeholder = `Email ${i + 1}`;
                 input.addEventListener('input', validateEmails);
+                input.addEventListener('focus', () => showVirtualKeyboard(input));
+                // pointerdown: immediately calculate and set caret so VK typing won't race with focus timing
+                input.addEventListener('pointerdown', (ev) => {
+                    try {
+                        const idx = estimateCaretIndexFromClientX(input, ev.clientX);
+                        if (typeof idx === 'number') {
+                            try { input.setSelectionRange(idx, idx); } catch (e) {}
+                            // store so insertTextAtCursor honors it immediately
+                            window._vkDesiredCaret = { el: input, start: idx, end: idx };
+                        }
+                    } catch (e) { /* ignore */ }
+                }, true);
+                // don't hide on individual input blur here; global focusout logic handles hiding so clicks into the keyboard don't close it
                 container.appendChild(input);
             }
         }
@@ -1903,6 +2426,127 @@
             }
             
             photoCounter++;
+
+            // Populate inline print-confirm area so the receipt screen shows the confirmation menu
+            try { showPrintConfirmation(); } catch (e) { /* ignore if not present */ }
+        }
+
+        // --- Print confirmation flow (inline on the receipt screen) ---
+        function showPrintConfirmation() {
+            // populate confirmation fields if present in the DOM (no screen switch)
+            const set = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = value; };
+            set('confirmEvent', config.eventName || '');
+            set('confirmName', session.name || '');
+            set('confirmCustomerId', session.customerNumber || '');
+            set('confirmDate', new Date().toLocaleDateString());
+            set('confirmTime', new Date().toLocaleTimeString());
+            set('confirmPeople', session.people || 1);
+            set('confirmBackground', session.background ? (session.background.name || session.background.id) : 'N/A');
+            set('confirmPrints', session.delivery.includes('print') ? session.printCount : '0');
+            set('confirmEmails', session.delivery.includes('email') ? session.emailCount : '0');
+            set('confirmTotal', calculatePrice().toFixed(2));
+            set('confirmPayment', session.payment ? session.payment.toUpperCase() : 'N/A');
+            // preview photo if available
+            const previewEl = document.getElementById('confirmPreview');
+            if (previewEl) {
+                if (session.photoData) previewEl.innerHTML = `<img src="${session.photoData}" style="width:240px;height:180px;object-fit:cover;border-radius:8px;" alt="Photo preview">`;
+                else previewEl.innerHTML = '<div style="width:240px;height:180px;display:flex;align-items:center;justify-content:center;background:#f0f0f0;border-radius:8px;color:#666;">No photo</div>';
+            }
+        }
+
+        function doPrintTicket() {
+            // Here we call the existing printReceipt() to simulate sending to printer
+            printReceipt();
+            // After printing, continue to instructions (or receipt flow as before)
+            showScreen('instructions');
+        }
+
+        // --- Order confirmation (pre-receipt) flow ---
+        function showOrderConfirmation() {
+            // Populate only user-entered fields for the pre-receipt confirmation.
+            // Use session values when available, otherwise fall back to current DOM inputs so the panel shows the latest typed values.
+            const setText = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = value; };
+
+            // Name: prefer session, otherwise read the name input directly
+            let name = (session && session.name) ? String(session.name) : '';
+            const nameInput = document.getElementById('customerName');
+            if ((!name || name.trim() === '') && nameInput) name = nameInput.value || '';
+
+            // People: prefer session, otherwise read the peopleCount element
+            let people = (session && typeof session.people === 'number') ? session.people : 1;
+            const peopleEl = document.getElementById('peopleCount');
+            if (peopleEl) {
+                const parsed = parseInt(peopleEl.textContent || peopleEl.value || '', 10);
+                if (!isNaN(parsed)) people = parsed;
+            }
+
+            // Prints: prefer session, otherwise read the printCountDisplay
+            let prints = (session && typeof session.printCount === 'number') ? session.printCount : 0;
+            const printEl = document.getElementById('printCountDisplay');
+            if (printEl) {
+                const parsed = parseInt(printEl.textContent || printEl.value || '', 10);
+                if (!isNaN(parsed)) prints = parsed;
+            }
+
+            // Payment: prefer session, otherwise check for a selected payment button in the DOM
+            let payment = (session && session.payment) ? String(session.payment) : '';
+            if (!payment) {
+                const payBtn = document.querySelector('#payment .touch-button.selected, .payment-method .touch-button.selected, .touch-button.payment.selected');
+                if (payBtn) payment = payBtn.dataset && payBtn.dataset.method ? payBtn.dataset.method : payBtn.textContent.trim();
+            }
+
+            // Emails: prefer session.emails, otherwise gather any email inputs currently present
+            let emails = Array.isArray(session && session.emails) ? session.emails.slice() : [];
+            if (!emails || emails.length === 0) {
+                const emailInputs = document.querySelectorAll('#emailInputs input[type="email"], #emailInputs input');
+                emailInputs.forEach(i => { if (i && i.value && i.value.trim()) emails.push(i.value.trim()); });
+            }
+
+            // Populate the confirm panel (order-specific IDs to avoid collisions with confirmPrint)
+            setText('confirmOrderName', name || '—');
+            setText('confirmOrderPeople', String(people));
+            // If printing isn't part of delivery, show 0
+            const printsShown = (session && Array.isArray(session.delivery) && session.delivery.includes('print')) ? String(prints) : (session && session.delivery ? (session.delivery.includes('print') ? String(prints) : '0') : String(prints));
+            setText('confirmOrderPrints', printsShown);
+            setText('confirmOrderPayment', payment ? payment.toUpperCase() : 'N/A');
+
+            const emailsEl = document.getElementById('confirmOrderEmails');
+            if (emailsEl) {
+                if (emails && emails.length) emailsEl.textContent = emails.join(', ');
+                else if (session && session.emailCount) emailsEl.textContent = `${session.emailCount} email(s)`;
+                else emailsEl.textContent = 'N/A';
+            }
+
+            // Populate background and total for the order panel
+            const bgEl = document.getElementById('confirmBackground');
+            if (bgEl) bgEl.textContent = session.background ? (session.background.name || session.background.id) : 'N/A';
+
+            const totalEl = document.getElementById('confirmTotal');
+            if (totalEl) totalEl.textContent = calculatePrice().toFixed(2);
+
+            // Populate preview if available
+            const previewEl = document.getElementById('confirmPreview');
+            if (previewEl) {
+                if (session.photoData) previewEl.innerHTML = `<img src="${session.photoData}" style="width:100%; height:100%; object-fit:cover; display:block;" alt="Photo preview">`;
+                else previewEl.innerHTML = '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#f0f0f0;color:#666;">No photo</div>';
+            }
+
+            showScreen('confirmOrder');
+        }
+
+        function confirmOrder() {
+            // user confirmed details; finalize order by generating receipt and showing it
+            generateReceipt();
+            showScreen('receipt');
+        }
+
+        // Confirm then pop the print modal (used by the bottom-right navigation Confirm button)
+        function confirmAndPopupPrint() {
+            // generate and show the receipt first
+            generateReceipt();
+            showScreen('receipt');
+            // show the same print/receipt-sent modal as doPrintTicket
+            try { printReceipt(); } catch (e) { console.warn('printReceipt not available', e); }
         }
 
         function printReceipt() {
@@ -2088,11 +2732,12 @@
             try {
                 const toolbar = document.getElementById('a11yToolbar');
                 if (!toolbar) return;
-                // Keep the toolbar vertically centered on the left side of the screen
+                // Place the toolbar bottom-left slightly above bottom controls so it doesn't block buttons
                 toolbar.style.left = '12px';
                 toolbar.style.right = 'auto';
-                toolbar.style.top = '50%';
-                toolbar.style.transform = 'translateY(-50%)';
+                toolbar.style.top = 'auto';
+                toolbar.style.bottom = '92px';
+                toolbar.style.transform = 'none';
             } catch (e) { console.warn('updateA11yPosition failed', e); }
         }
 
@@ -2106,17 +2751,22 @@
         // Ensure initial position is correct on load
         try { updateA11yPosition(currentScreen); } catch (e) {}
 
-        // Continue button cancels timeout
-        document.getElementById("continueBtn").addEventListener("click", () => {
-            clearInterval(countdownTimer);
-           document.getElementById("timeoutModal").style.display = "none";
-           resetIdleTimer(); // restart idle tracking
-        });
+        // Continue button cancels timeout (guard in case the button isn't present)
+        (function(){
+            const cb = document.getElementById("continueBtn");
+            if (!cb) return;
+            cb.addEventListener("click", () => {
+                try { clearInterval(countdownTimer); } catch (e) {}
+                const modal = document.getElementById("timeoutModal"); if (modal) modal.style.display = "none";
+                try { resetIdleTimer(); } catch (e) {}
+            });
+        })();
+
 
 
     </script>
     	<!-- Timeout Modal -->
-	<div id="timeoutModal">
+    <div id="timeoutModal">
 	     <div class="modal-content">
 	          <h2>⏳ Session Timeout</h2>
 	          <p>No activity detected please tap the screen to "Continue". Returning to the Welcome screen in 
@@ -2132,7 +2782,7 @@
             <h3 id="pwdTitle" style="margin:0;">Operator Access</h3>
             <p style="color:#555; margin-top:8px;">This area is for operators only. If you stumbled upon this, press the red X to exit and continue on.</p>
             <div style="margin-top:12px;">
-                <input id="pwdInput" type="password" inputmode="numeric" pattern="[0-9]*" placeholder="Enter PIN" maxlength="8" style="width:100%; padding:12px; font-size:1.4rem; box-sizing:border-box;" />
+                <input id="pwdInput" class="needs-virtual-keyboard" type="password" inputmode="numeric" pattern="[0-9]*" placeholder="Enter PIN" maxlength="8" style="width:100%; padding:12px; font-size:1.4rem; box-sizing:border-box;" />
             </div>
             <div id="pwdError" style="color:#c0392b; margin-top:8px; min-height:18px;"></div>
             <div class="cfg-actions">
@@ -2145,13 +2795,13 @@
             <h3 id="cfgTitle">Operator Settings</h3>
             <div class="config-grid">
                 <div>
-                    <label>Event Name<br><input id="cfgEventName" type="text" style="width:100%; padding:8px; margin-top:6px;" /></label>
-                    <label style="display:block; margin-top:10px;">Base Price ($)<br><input id="cfgBasePrice" type="number" step="0.01" min="0" style="width:100%; padding:8px; margin-top:6px;" /></label>
-                    <label style="display:block; margin-top:10px;">Additional Print Price ($)<br><input id="cfgAdditionalPrintPrice" type="number" step="0.01" min="0" style="width:100%; padding:8px; margin-top:6px;" /></label>
+                    <label>Event Name<br><input id="cfgEventName" class="needs-virtual-keyboard" type="text" style="width:100%; padding:8px; margin-top:6px;" /></label>
+                    <label style="display:block; margin-top:10px;">Base Price ($)<br><input id="cfgBasePrice" class="needs-virtual-keyboard" type="number" step="0.01" min="0" style="width:100%; padding:8px; margin-top:6px;" /></label>
+                    <label style="display:block; margin-top:10px;">Additional Print Price ($)<br><input id="cfgAdditionalPrintPrice" class="needs-virtual-keyboard" type="number" step="0.01" min="0" style="width:100%; padding:8px; margin-top:6px;" /></label>
                 </div>
                 <div>
-                    <label>Max Prints<br><input id="cfgMaxPrints" type="number" min="1" style="width:100%; padding:8px; margin-top:6px;" /></label>
-                    <label style="display:block; margin-top:10px;">Max Emails<br><input id="cfgMaxEmails" type="number" min="1" style="width:100%; padding:8px; margin-top:6px;" /></label>
+                    <label>Max Prints<br><input id="cfgMaxPrints" class="needs-virtual-keyboard" type="number" min="1" style="width:100%; padding:8px; margin-top:6px;" /></label>
+                    <label style="display:block; margin-top:10px;">Max Emails<br><input id="cfgMaxEmails" class="needs-virtual-keyboard" type="number" min="1" style="width:100%; padding:8px; margin-top:6px;" /></label>
                     <div style="margin-top:12px;">
                         <strong>Payment Methods</strong><br>
                         <label><input id="cfgPay_cash" type="checkbox"> Cash</label>
@@ -2215,8 +2865,8 @@
                     const all = document.querySelectorAll('body *');
                     all.forEach(el => {
                         try {
-                            // Skip elements inside the accessibility toolbar so controls remain stable
-                            if (el.closest && el.closest('#a11yToolbar')) return;
+                            // Skip elements inside the accessibility toolbar and the virtual keyboard so controls remain stable
+                            if (el.closest && (el.closest('#a11yToolbar') || el.closest('#virtualKeyboard'))) return;
                             if (!el.dataset.baseFontSize) {
                                 const cs = window.getComputedStyle(el);
                                 const f = parseFloat(cs.fontSize) || 16;
