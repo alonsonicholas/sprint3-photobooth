@@ -696,7 +696,7 @@
             <button class="quit-button" onclick="quitSession()">✕ Quit</button>
             <div class="header">
                 <h2>How Many Picture(s) to Print?</h2>
-                <p style="font-size: 1.2rem; margin: 10px 0; color: rgba(255,255,255,0.9);">$5 for the first print + $1 for each additional print</p>
+                <p id="printPriceDisplay" style="font-size: 1.2rem; margin: 10px 0; color: rgba(255,255,255,0.9);"></p>
                 <div class="progress-bar">
                     <div class="progress-fill" style="width: 56%"></div>
                 </div>
@@ -721,6 +721,8 @@
             <button class="quit-button" onclick="quitSession()">✕ Quit</button>
             <div class="header">
                 <h2>Enter Your Name</h2>
+                <!-- Subheader clarifying purpose of the name (printed on receipt) -->
+                <p style="font-size:1.05rem; margin:6px 0; color: rgba(255,255,255,0.92);">This name will be printed on your receipt.</p>
                 <div class="progress-bar">
                     <div class="progress-fill" style="width: 84%"></div>
                 </div>
@@ -833,10 +835,15 @@
                     <div class="receipt-section">
                         <h3 style="text-align: center; margin-top: 0;">CUSTOMER COPY - KEEP THIS!</h3>
                         
-                        <div style="background: #f0f0f0; padding: 15px; margin: 15px 0; border-radius: 5px;">
-                            <strong>📋 INSTRUCTIONS:</strong><br>
-                            • Bring this receipt for pickup of print(s) at the end of the event<br>
-                            • Photo emailed within 24-48 hours and if the photo is not received in that window please contact our email<br>
+                        <div class="receipt-instructions" role="note" aria-label="Important receipt instructions">
+                            <div class="ri-icon" aria-hidden="true">📋</div>
+                            <div class="ri-content">
+                                <div class="ri-title">INSTRUCTIONS</div>
+                                <ul class="ri-list">
+                                    <li>Bring this receipt to pick up your print(s) at the end of the event.</li>
+                                    <li>Photos are emailed within 24–48 hours. If you do not receive them, please contact support.</li>
+                                </ul>
+                            </div>
                         </div>
                         
                         <p><strong>Event:</strong> <span id="receiptEvent">Festival 2025</span></p>
@@ -907,97 +914,15 @@
                 
                 <div style="margin-top: 30px; display:flex; justify-content:center;">
                     <div style="display:flex; gap:12px;">
-                        <button class="touch-button" onclick="showScreen('instructions')" style="max-width: 200px;">
-                            <div class="emoji">→</div>
-                            <div>Next</div>
+                        <button class="touch-button" onclick="startOver()" style="max-width: 200px;">
+                            <div class="emoji">🔄</div>
+                            <div>New Customer</div>
                         </button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Instructions -->
-        <div class="screen" id="instructions">
-            <div class="header">
-                <h1>📋 Important Instructions</h1>
-                <h2>Please Read Carefully</h2>
-            </div>
-            <div class="content" style="justify-content: flex-start; padding-top: 20px; overflow-y: auto;">
-                <div style="background: white; padding: 40px; border-radius: 20px; max-width: 800px; width: 100%; box-shadow: 0 8px 20px rgba(0,0,0,0.3); margin-bottom: 30px;">
-                    
-                    <div id="instructionsContainer" style="margin-bottom: 40px;">
-                        <!-- Print Instructions -->
-                        <div id="printInstructions" style="display: none;">
-                            <h3 style="color: #667eea; margin-top: 0; font-size: 2.2rem; display: flex; align-items: center; justify-content: center; gap: 15px; text-align: center; margin-bottom: 30px;">
-                                🖨️ Print Pickup Instructions
-                            </h3>
-                            <div style="background: #f8f9ff; padding: 35px; border-radius: 15px; border-left: 8px solid #667eea; max-width: 700px; margin: 0 auto;">
-                                <ul style="margin: 0; padding-left: 25px; line-height: 2.2; font-size: 1.3rem;">
-                                    <li style="margin-bottom: 15px;"><strong>How to pick up print(s)?</strong> - Bring the receipt you'll need it for pickup</li>
-                                    <li style="margin-bottom: 7.5px;"><strong>When to pick up print(s)?</strong> - At the end of the event</li>
-                                    <li style="margin-bottom: 0;"><strong>Lost receipt?</strong> Provide your name and customer number to staff</li>
-                                </ul>
-                            </div>
-                        </div>
-
-                        <!-- Email Instructions -->
-                        <div id="emailInstructions" style="display: none;">
-                            <h3 style="color: #667eea; margin-top: 0; font-size: 2.2rem; display: flex; align-items: center; justify-content: center; gap: 15px; text-align: center; margin-bottom: 30px;">
-                                📧 Email Delivery Instructions
-                            </h3>
-                            <div style="background: #f8f9ff; padding: 35px; border-radius: 15px; border-left: 8px solid #667eea; max-width: 700px; margin: 0 auto;">
-                                <ul style="margin: 0; padding-left: 25px; line-height: 2.2; font-size: 1.3rem;">
-                                    <li style="margin-bottom: 15px;"><strong>Photo(s) will be emailed within 24-48 hours</strong> of the event</li>
-                                    <li style="margin-bottom: 15px;"><strong>Check your spam/junk folder</strong> if you don't see the email</li>
-                                    <li style="margin-bottom: 15px;"><strong>Issues receiving the photo(s)?</strong> Contact gr33nscr33n@photos.com</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- General Instructions -->
-                    <div style="background: #fff8e1; padding: 25px; border-radius: 10px; border-left: 5px solid #ffa726; margin-bottom: 30px;">
-                        <h3 style="color: #f57c00; margin-top: 0; font-size: 1.8rem; display: flex; align-items: center; gap: 10px;">
-                            ⚠️ Important Reminders
-                        </h3>
-                        <ul style="margin: 0; padding-left: 20px; line-height: 1.8; font-size: 1.1rem; color: #333;">
-                            <li><strong>Keep your receipt safe</strong> - It contains your customer number</li>
-                            <li><strong>Write down customer number</strong> - It is unique to you</li>
-                            <li><strong>Questions or issues?</strong> - Find a staff member, email us, or give us a call</li>
-                            <li><strong>Event photos are private</strong> - Only sent to email addresses you provided</li>
-                        </ul>
-                    </div>
-
-                    <!-- Contact Information -->
-                    <div style="background: #e8f5e8; padding: 25px; border-radius: 10px; border-left: 5px solid #4caf50;">
-                        <h3 style="color: #2e7d32; margin-top: 0; font-size: 1.8rem; display: flex; align-items: center; gap: 10px;">
-                           ❓ Need Help?
-                        </h3>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; font-size: 1.1rem; color: #333;">
-                            <div>
-                                <strong>📧 Email Support:</strong><br>
-                                gr33nscr33n@photos.com
-                            </div>
-                            <div>
-                                <strong>📞 Phone Support:</strong><br>
-                                (555)555-5555
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="button-grid grid-2" style="max-width: 600px;">
-                    <button class="touch-button" onclick="goBack()">
-                        <div class="emoji">← </div>
-                        <div>Back to Receipt</div>
-                    </button>
-                    <button class="touch-button" onclick="startOver()">
-                        <div class="emoji">🔄</div>
-                        <div>New Customer</div>
-                    </button>
-                </div>
-            </div>
-        </div>
     </div>
 
     <script>
@@ -1150,6 +1075,8 @@
                     // Row 5: Space and Hide (bottom row)
                     const space = makeKey('Space', 'space'); space.addEventListener('click', onSpace); r5.appendChild(space);
                     const at = makeKey('@'); r5.appendChild(at);
+                    // quick domain completion key for email entry
+                    const dotCom = makeKey('.com'); r5.appendChild(dotCom);
                     const hide = makeKey('Hide', 'wide'); hide.addEventListener('click', hideVirtualKeyboard); r5.appendChild(hide);
                 }
 
@@ -1455,20 +1382,42 @@
             <style>
                 /* Global typography: normalize and enlarge text for better readability.
                    Uses !important to override inline sizes where necessary in this single-file app. */
-                :root{ --base-font: 20px; --h1:32px; --h2:24px; --h3:20px; --body-line:1.45; }
+                :root{ --base-font: 20px; --h1:32px; --h2:24px; --h3:20px; --body-line:1.45; --ui-font:18px; }
                 body, .kiosk-container, .screen, .content, .receipt, .header { font-size: var(--base-font) !important; line-height: var(--body-line) !important; }
                 h1 { font-size: var(--h1) !important; }
                 h2 { font-size: var(--h2) !important; }
                 h3 { font-size: var(--h3) !important; }
                 p, label, div, span { font-size: var(--base-font) !important; }
-                button, .nav-button, .touch-button { font-size: 18px !important; }
-                input, textarea, select, .email-input { font-size: 18px !important; }
+                button, .nav-button, .touch-button { font-size: var(--ui-font) !important; }
+                input, textarea, select, .email-input { font-size: var(--ui-font) !important; }
                 .vk-key { font-size: 20px !important; padding: 18px 14px !important; }
                 /* Emphasize confirmation name/total but keep sizes consistent */
                 #confirmOrderName { font-size: 1.6rem !important; font-weight: 600 !important; }
                 #confirmTotal { font-size: 1.4rem !important; font-weight: 700 !important; }
                 /* Ensure receipt/operator copies remain readable */
                 .receipt-section { font-size: 18px !important; }
+                /* Receipt instructions — prominent but calm styling (darker gray for better contrast) */
+                .receipt-instructions {
+                    display: flex;
+                    gap: 12px;
+                    align-items: flex-start;
+                    /* stronger neutral gray background so the box is more obvious */
+                    background-color: #e6e6e6; /* fallback for older browsers */
+                    background: linear-gradient(180deg, #f2f2f2 0%, #dcdcdc 100%);
+                    border-left: 6px solid #ffb74d; /* warm accent */
+                    padding: 14px 14px 14px 12px;
+                    margin: 14px 0;
+                    border-radius: 8px;
+                    /* slightly stronger shadow for clearer separation */
+                    box-shadow: 0 8px 24px rgba(20, 40, 60, 0.09);
+                    color: #12202b;
+                    line-height: 1.35;
+                }
+                .receipt-instructions .ri-icon { font-size: 1.6rem; margin-top: 2px; }
+                .receipt-instructions .ri-content { flex: 1; }
+                .receipt-instructions .ri-title { font-weight: 700; font-size: 1.05rem; margin-bottom: 6px; color: #0f1720; }
+                .receipt-instructions .ri-list { margin: 0; padding-left: 18px; font-size: 1rem; }
+                .receipt-instructions .ri-list li { margin-bottom: 6px; }
                 /* Accessibility: prefer no animation here; dropdown will appear above the button. */
             </style>
 
@@ -1498,7 +1447,7 @@
                 ],
                 "Other": [
                     { id: 15, name: "City Lights", imageUrl: "https://images.unsplash.com/photo-1514565131-fce0801e5785?w=800&h=600&fit=crop", preview: `<img src="https://images.unsplash.com/photo-1514565131-fce0801e5785?w=60&h=40&fit=crop" style="width: 60px; height: 40px; border-radius: 4px;" onerror="this.style.display='none';" alt="City Lights">` },
-                    { id: 18, name: "Custom Upload", preview: `<svg width="60" height="40" viewBox="0 0 60 40"><rect width="60" height="40" fill="#f0f0f0" stroke="#ccc" stroke-width="1"/><path d="M30,10 L35,20 L25,20 Z" fill="#666"/><rect x="25" y="20" width="10" height="8" fill="#666"/><text x="30" y="35" text-anchor="middle" fill="#000000" font-size="6">Upload</text></svg>` }
+                    { id: 18, name: "Custom Background", preview: `<svg width="60" height="40" viewBox="0 0 60 40"><rect width="60" height="40" fill="#f0f0f0" stroke="#ccc" stroke-width="1"/><path d="M30,10 L35,20 L25,20 Z" fill="#666"/><rect x="25" y="20" width="10" height="8" fill="#666"/><text x="30" y="35" text-anchor="middle" fill="#000000" font-size="6">Upload</text></svg>` }
                 ]
             }
         };
@@ -1667,6 +1616,8 @@
             // refresh dependent UI
             if (typeof updateMethodButtons === 'function') updateMethodButtons();
             loadBackgrounds();
+            try { updatePrintPriceDisplay(); } catch (e) { /* ignore if not present */ }
+            try { updateTotalBox(); } catch (e) { /* ignore */ }
 
             closeConfigModal();
         }
@@ -1733,7 +1684,8 @@
         // initialize persisted config
         loadSavedConfig();
         window.enabledBackgrounds = window.enabledBackgrounds || {};
-    if (typeof updateMethodButtons === 'function') updateMethodButtons();
+        if (typeof updateMethodButtons === 'function') updateMethodButtons();
+        try { updatePrintPriceDisplay(); } catch (e) { /* ignore if not present yet */ }
 
     // Demo ticket history (simple signifiers for operator reprint demo)
     const ticketHistory = [
@@ -1892,33 +1844,9 @@
             }
             
             
-            // Setup instructions screen based on delivery method
-            if (screenId === 'instructions') {
-                setupInstructionsScreen();
-            }
+            // Instructions screen removed — no setup needed here
         }
         
-        function setupInstructionsScreen() {
-            const printInstructions = document.getElementById('printInstructions');
-            const emailInstructions = document.getElementById('emailInstructions');
-            
-            const hasPrint = session.delivery.includes('print');
-            const hasEmail = session.delivery.includes('email');
-            
-            if (hasPrint && hasEmail) {
-                printInstructions.style.display = 'block';
-                emailInstructions.style.display = 'block';
-            } else if (hasPrint) {
-                printInstructions.style.display = 'block';
-                emailInstructions.style.display = 'none';
-            } else if (hasEmail) {
-                printInstructions.style.display = 'none';
-                emailInstructions.style.display = 'block';
-            } else {
-                printInstructions.style.display = 'none';
-                emailInstructions.style.display = 'none';
-            }
-        }
         
         // Camera functions
         let cameraStream = null;
@@ -1992,7 +1920,7 @@
         }
 
         function goBack() {
-            const screens = ['welcome', 'background', 'people', 'delivery', 'emailCount', 'printCount', 'nameEntry', 'emailEntry', 'camera', 'payment', 'receipt', 'instructions'];
+            const screens = ['welcome', 'background', 'people', 'delivery', 'emailCount', 'printCount', 'emailEntry', 'nameEntry', 'camera', 'payment', 'receipt'];
             const currentIndex = screens.indexOf(currentScreen);
             
             if (currentIndex > 0) {
@@ -2006,7 +1934,8 @@
                     prevScreen = screens[currentIndex - 2];
                 }
                 if (prevScreen === 'emailEntry' && !session.delivery.includes('email')) {
-                    prevScreen = 'nameEntry';
+                    // skip the email entry screen if email delivery wasn't selected
+                    prevScreen = screens[currentIndex - 2];
                 }
                 
                 showScreen(prevScreen);
@@ -2021,10 +1950,13 @@
                 'background': 'people',
                 'people': 'delivery',
                 'delivery': hasEmail ? 'emailCount' : (hasPrint ? 'printCount' : 'nameEntry'),
-                'emailCount': hasPrint ? 'printCount' : 'nameEntry',
-                'printCount': 'nameEntry',
-                'nameEntry': hasEmail ? 'emailEntry' : 'camera',
-                'emailEntry': 'camera',
+                // After choosing how many emails, if there are prints we go to printCount first,
+                // otherwise go straight to the email entry screen so the user can enter addresses.
+                'emailCount': hasPrint ? 'printCount' : 'emailEntry',
+                'printCount': hasEmail ? 'emailEntry' : 'nameEntry',
+                // emailEntry now comes before nameEntry
+                'emailEntry': 'nameEntry',
+                'nameEntry': 'camera',
                 'camera': 'payment',
                 // show confirmation BEFORE showing receipt so user can verify details
                 'payment': 'receipt',
@@ -2144,10 +2076,41 @@
             document.getElementById('peopleCount').textContent = session.people;
         }
 
-	function updateTotalBox() {
-	      const total = calculatePrice(); // assumes you already have calculatePrice()
-	   document.getElementById('totalAmount').textContent = total.toFixed(2);
-	}
+    function updateTotalBox() {
+      const total = calculatePrice(); // assumes you already have calculatePrice()
+      document.getElementById('totalAmount').textContent = total.toFixed(2);
+    }
+
+    // Update the descriptive price text on the Print Count screen based on operator config
+    function updatePrintPriceDisplay() {
+        const el = document.getElementById('printPriceDisplay');
+        if (!el) return;
+
+        // If both base and additional prices are zero, hide the explanatory text (photos are free)
+        const base = Number.isFinite(config.basePrice) ? config.basePrice : 0;
+        const add = Number.isFinite(config.additionalPrintPrice) ? config.additionalPrintPrice : 0;
+
+        if (base === 0 && add === 0) {
+            el.style.display = 'none';
+            el.textContent = '';
+            return;
+        }
+
+        el.style.display = 'block';
+
+        // Choose friendly phrasing depending on which prices are set
+        if (base > 0 && add > 0) {
+            el.textContent = `$${base.toFixed(2)} for the first print + $${add.toFixed(2)} for each additional print`;
+        } else if (base > 0 && add === 0) {
+            el.textContent = `$${base.toFixed(2)} per print`;
+        } else if (base === 0 && add > 0) {
+            el.textContent = `First print free; additional prints $${add.toFixed(2)} each`;
+        } else {
+            // fallback — show a simple price
+            const price = base + (session.printCount > 1 ? (session.printCount - 1) * add : 0);
+            el.textContent = `$${price.toFixed(2)}`;
+        }
+    }
 
 
         // Delivery selection
@@ -2178,13 +2141,9 @@
         function changePrints(delta) {
             session.printCount = Math.max(1, Math.min(config.maxPrints, session.printCount + delta));
             document.getElementById('printCountDisplay').textContent = session.printCount;
-            
-            const priceDisplay = document.getElementById('printPriceDisplay');
-            if (priceDisplay) {
-                const price = config.basePrice + (session.printCount > 1 ? (session.printCount - 1) * config.additionalPrintPrice : 0);
-                priceDisplay.textContent = '$' + price.toFixed(2);
-            }
-	   updateTotalBox()
+            // Refresh descriptive pricing (reflects any operator config changes)
+            try { updatePrintPriceDisplay(); } catch (e) { /* ignore */ }
+            updateTotalBox();
         }
 
         // Payment selection
@@ -2456,9 +2415,11 @@
 
         function doPrintTicket() {
             // Here we call the existing printReceipt() to simulate sending to printer
+            // Ensure receipt fields are populated first
+            try { generateReceipt(); } catch (e) { /* ignore */ }
             printReceipt();
-            // After printing, continue to instructions (or receipt flow as before)
-            showScreen('instructions');
+            // After printing, remain on the receipt screen. The operator or user may press "New Customer" when ready.
+            try { showScreen('receipt'); } catch (e) { /* ignore */ }
         }
 
         // --- Order confirmation (pre-receipt) flow ---
@@ -2623,6 +2584,9 @@
 
 	   // Reset Total Box
 	   updateTotalBox();
+
+               // Refresh print price text in case operator changed pricing
+               try { updatePrintPriceDisplay(); } catch (e) { /* ignore */ }
         }
 
         function startOver() {
@@ -2696,11 +2660,11 @@
             clearInterval(countdownTimer);
               document.getElementById("timeoutModal").style.display = "none";
 
-            const activeScreens = [
-              "background","people","delivery","emailCount","printCount",
-              "nameEntry","emailEntry","camera","payment",
-              "receipt", "instructions"
-            ];
+                        const activeScreens = [
+                            "background","people","delivery","emailCount","printCount",
+                            "nameEntry","emailEntry","camera","payment",
+                            "receipt"
+                        ];
             if (activeScreens.includes(currentScreen)) {
                idleTimer = setTimeout(showTimeoutWarning, 50000); // 50s
             }
@@ -2745,8 +2709,22 @@
         const originalShowScreen = showScreen;
         showScreen = function(screenId) {
             originalShowScreen(screenId);
-           resetIdleTimer();
-           updateA11yPosition(screenId);
+            resetIdleTimer();
+            updateA11yPosition(screenId);
+            // Ensure email inputs are prepared any time the email entry screen is shown
+            // This covers both forward navigation and cases where the user navigates back/forwards
+            // so the screen isn't blank.
+            if (screenId === 'emailEntry') {
+                try { setupEmailInputs(); } catch (e) { /* ignore if not available */ }
+            }
+            // Ensure receipt is generated when the receipt screen is shown so fields are always populated
+            if (screenId === 'receipt') {
+                try { generateReceipt(); } catch (e) { /* ignore */ }
+            }
+            // Ensure print count screen describes the current pricing
+            if (screenId === 'printCount') {
+                try { updatePrintPriceDisplay(); } catch (e) { /* ignore */ }
+            }
         };
         // Ensure initial position is correct on load
         try { updateA11yPosition(currentScreen); } catch (e) {}
@@ -2860,26 +2838,24 @@
                 try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) { console.warn('Save accessibility failed', e); }
             }
 
-            // Apply font scaling to all elements consistently (stores a base computed font size)
+            // Apply font scaling by updating root CSS variables so !important stylesheet rules respond.
             function applyFontScaling() {
-                    const all = document.querySelectorAll('body *');
-                    all.forEach(el => {
-                        try {
-                            // Skip elements inside the accessibility toolbar and the virtual keyboard so controls remain stable
-                            if (el.closest && (el.closest('#a11yToolbar') || el.closest('#virtualKeyboard'))) return;
-                            if (!el.dataset.baseFontSize) {
-                                const cs = window.getComputedStyle(el);
-                                const f = parseFloat(cs.fontSize) || 16;
-                                el.dataset.baseFontSize = String(f);
-                            }
-                            const base = parseFloat(el.dataset.baseFontSize) || 16;
-                            el.style.fontSize = Math.max(10, Math.round(base * state.fontScale)) + 'px';
-                        } catch (e) {
-                            // ignore elements that can't be styled
-                        }
-                    });
-                const sizeRoot = Math.max(12, Math.round(16 * state.fontScale));
-                document.documentElement.style.setProperty('--app-base-font-size', sizeRoot + 'px');
+                try {
+                    // Compute a new base font size from the default 20px scaled by the state
+                    const newBase = Math.max(12, Math.round(20 * state.fontScale));
+                    const newH1 = Math.round(newBase * 1.6);
+                    const newH2 = Math.round(newBase * 1.2);
+                    const newH3 = Math.round(newBase * 1.0);
+                    const newUI = Math.max(12, Math.round(newBase * 0.9));
+
+                    document.documentElement.style.setProperty('--base-font', newBase + 'px');
+                    document.documentElement.style.setProperty('--h1', newH1 + 'px');
+                    document.documentElement.style.setProperty('--h2', newH2 + 'px');
+                    document.documentElement.style.setProperty('--h3', newH3 + 'px');
+                    document.documentElement.style.setProperty('--ui-font', newUI + 'px');
+                } catch (e) {
+                    console.warn('applyFontScaling failed', e);
+                }
             }
 
             function apply() {
