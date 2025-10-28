@@ -1021,22 +1021,25 @@
                 z-index: 17000;
                 background: linear-gradient(#f8f8f8, #ffffff);
                 color: #000;
-                padding: 12px 10px 18px;
+                /* increased padding ~15% for slightly larger keyboard */
+                padding: 14px 12px 21px;
                 box-shadow: 0 -12px 30px rgba(0,0,0,0.08);
                 border-top-left-radius: 18px;
                 border-top-right-radius: 18px;
                 -webkit-font-smoothing: antialiased;
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
             }
-            .vk-row { display:flex; gap:12px; justify-content:center; margin-bottom:12px; }
+            /* slightly wider gaps to match larger keys */
+            .vk-row { display:flex; gap:14px; justify-content:center; margin-bottom:14px; }
             .vk-key {
                 background: linear-gradient(#ffffff, #f5f6f8);
                 border: 1px solid rgba(0,0,0,0.06);
                 color: #000;
-                padding: 16px 14px;
-                min-width: 60px;
+                /* increased padding and font-size by ~15% */
+                padding: 18px 16px;
+                min-width: 69px;
                 border-radius: 12px;
-                font-size: 20px;
+                font-size: 23px;
                 line-height: 1;
                 text-align: center;
                 user-select: none;
@@ -1044,8 +1047,8 @@
                 box-shadow: 0 3px 0 rgba(0,0,0,0.04), inset 0 -1px 0 rgba(0,0,0,0.02);
                 transition: transform 80ms ease, background 80ms ease, box-shadow 80ms ease;
             }
-            .vk-key.wide { min-width: 140px; border-radius: 14px; }
-            .vk-key.space { min-width: 420px; border-radius: 14px; }
+            .vk-key.wide { min-width: 161px; border-radius: 14px; }
+            .vk-key.space { min-width: 483px; border-radius: 14px; }
             .vk-key.active {
                 background: linear-gradient(#e9f2ff, #d9eaff);
                 border-color: rgba(34,122,255,0.35);
@@ -1055,7 +1058,7 @@
             .vk-key[aria-pressed='true'] { background: #e6f0ff; }
             .vk-hidden { display: none !important; }
             /* slightly larger spacing for the bottom row to emulate iOS keyboard gutters */
-            #vk-row-4 { padding-bottom: 6px; }
+            #vk-row-4 { padding-bottom: 7px; }
         </style>
         <div id="virtualKeyboard" class="virtual-keyboard" style="display:none;" aria-hidden="true" role="application" aria-label="On screen keyboard">
             <div class="vk-row" id="vk-row-1"></div>
@@ -1422,7 +1425,8 @@
                 p, label, div, span { font-size: var(--base-font) !important; }
                 button, .nav-button, .touch-button { font-size: var(--ui-font) !important; }
                 input, textarea, select, .email-input { font-size: var(--ui-font) !important; }
-                .vk-key { font-size: 20px !important; padding: 18px 14px !important; }
+                /* Ensure the virtual keyboard keys honor the larger sizing; keep !important so single-file overrides work */
+                .vk-key { font-size: 23px !important; padding: 20px 16px !important; }
                 /* Emphasize confirmation name/total but keep sizes consistent */
                 #confirmOrderName { font-size: 1.6rem !important; font-weight: 600 !important; }
                 #confirmTotal { font-size: 1.4rem !important; font-weight: 700 !important; }
