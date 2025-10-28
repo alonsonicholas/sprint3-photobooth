@@ -221,6 +221,35 @@
             z-index: 2000;
             transition: transform 0.25s ease;
         }
+
+        /* Inline total shown above per-screen navigation so users can easily see the current total.
+           Position fixed so it appears above the bottom navigation regardless of content flow.
+           Remove opaque white background and use a minimal, high-contrast presentation. */
+        .inline-total {
+            display: none; /* shown only on screens where needed */
+            position: relative; /* flow with document so placing inline before buttons puts it above them */
+            margin: 0 auto 12px auto;
+            width: auto;
+            max-width: 420px;
+            padding: 8px 12px;
+            background: rgba(0,0,0,0.45); /* subtle translucent background instead of solid white */
+            color: #ffffff;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 1.25rem;
+            text-align: center;
+            z-index: 2100;
+            pointer-events: none; /* don't block button touches */
+        }
+        .inline-total .inline-total-amount { font-family: monospace; display:inline-block; min-width:72px; }
+        /* Ensure inline totals move up with keyboard the same as .navigation by giving them the move-with-vk class */
+    .inline-total.move-with-vk { will-change: transform; }
+        /* Visual treatment for FREE totals so users notice when price is zero */
+        .inline-total.free { background: rgba(76,175,80,0.12); color: #1b5e20; border: 1px solid rgba(27,94,32,0.08); }
+        .inline-total.free .inline-total-amount { color: #1b5e20; font-weight:800; }
+        #totalBox.free { color: #1b5e20; }
+    /* 'Free' badge styling for print price hint */
+    #printPriceDisplay.free { color: #1b5e20; background: rgba(76,175,80,0.06); padding:6px 8px; border-radius:6px; display:inline-block; font-weight:700; }
         
         .nav-button {
             background: rgba(255,255,255,0.2);
@@ -558,11 +587,9 @@
                             <div id="confirmPreview" style="width:240px; height:180px; border-radius:8px; overflow:hidden; background:#f0f0f0; display:flex; align-items:center; justify-content:center; color:#666;">No photo</div>
                         </div>
                     </div>
-                    <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:12px;">
-                        <button class="nav-button" onclick="showScreen('payment')" style="background:#ccc;color:#222;">Cancel</button>
-                        <button class="nav-button" onclick="doPrintTicket()" style="background:#667eea;color:#fff;">Confirm & Print</button>
-                    </div>
+                    <!-- Inline action buttons removed; use bottom navigation controls (Back / Confirm & Continue) instead -->
                 </div>
+                <!-- Inline total intentionally omitted on confirmOrder (use top-left total box) -->
             </div>
             <div class="navigation" style="margin-top:18px;">
                 <button class="nav-button" onclick="showScreen('payment')">← Back</button>
@@ -572,9 +599,9 @@
     </div>
     <div class="kiosk-container">
 
-     <div id="totalBox">
-        <strong>🛒 Total:</strong> $<span id="totalAmount">0.00</span>
-     </div>
+      <div id="totalBox">
+          <strong>🛒 Total:</strong> <span id="totalAmount">$0.00</span>
+      </div>
 
         <!-- Welcome Screen -->
         <div class="screen active" id="welcome">
@@ -650,6 +677,8 @@
                 </div>
             </div>
             <div class="content">
+                <!-- Inline total positioned above the central touch buttons so users see price while making selections -->
+                <div class="inline-total move-with-vk" id="inlineTotalDelivery" aria-live="polite"><span class="inline-total-amount">$0.00</span></div>
                 <div class="button-grid grid-2">
                     <button class="touch-button" onclick="toggleDelivery('email')" id="emailBtn">
                         <div class="emoji">📧</div>
@@ -702,12 +731,13 @@
                 </div>
             </div>
             <div class="content">
+                <!-- Inline total positioned above the counter/buttons so the user sees the price while changing prints -->
+                <div class="inline-total move-with-vk" id="inlineTotalPrints" aria-live="polite"><span class="inline-total-amount">$0.00</span></div>
                 <div class="counter">
                     <button class="counter-button" onclick="changePrints(-1)">−</button>
                     <div class="counter-display" id="printCountDisplay">1</div>
                     <button class="counter-button" onclick="changePrints(1)">+</button>
                 </div>
-                
 
                 <div class="navigation">
                     <button class="nav-button" onclick="goBack()">← Back</button>
@@ -802,6 +832,8 @@
                 </div>
             </div>
             <div class="content">
+                <!-- Inline total positioned above the payment buttons so user sees the current amount while selecting payment -->
+                <div class="inline-total move-with-vk" id="inlineTotalPayment" aria-live="polite"><span class="inline-total-amount">$0.00</span></div>
                 <div class="button-grid grid-3">
                     <button class="touch-button" onclick="selectPayment('cash')" id="cashBtn">
                         <div class="emoji">💵</div>
@@ -830,6 +862,13 @@
                 <h2>Here's Your Receipt</h2>
             </div>
             <div class="content" style="overflow-y: auto; justify-content: flex-start; padding-top: 0;">
+                <div style="background: #e8f5e8; padding: 20px; border-radius: 15px; margin: 20px 0; text-align: center; border-left: 5px solid #4caf50;">
+                    <h3 style="color: #2e7d32; margin: 0 0 10px 0; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                        🖨️ Your Receipt Is Printing
+                    </h3>
+                    <p style="margin: 0; font-size: 1.2rem; color: #333;">Your receipt is being printed now. Please collect it and hand it to the photographer.</p>
+                </div>
+
                 <div class="receipt">
                     <!-- Customer Copy -->
                     <div class="receipt-section">
@@ -903,13 +942,6 @@
                             <div class="stamp-box">TAKEN PHOTO</div>
                         </div>
                     </div>
-                </div>
-                
-                <div style="background: #e8f5e8; padding: 20px; border-radius: 15px; margin: 20px 0; text-align: center; border-left: 5px solid #4caf50;">
-                    <h3 style="color: #2e7d32; margin: 0 0 10px 0; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; gap: 10px;">
-                        🖨️ Your Receipt Is Printing
-                    </h3>
-                    <p style="margin: 0; font-size: 1.2rem; color: #333;">Your receipt is being printed now. Please collect it and hand it to the photographer.</p>
                 </div>
                 
                 <div style="margin-top: 30px; display:flex; justify-content:center;">
@@ -1836,11 +1868,9 @@
             }
             
             const totalBox = document.getElementById('totalBox');
-            const visibleScreens = ['background','people','delivery','emailCount','printCount','payment','nameEntry','emailEntry','camera','confirmOrder'];
-            if (visibleScreens.includes(screenId)) {
+            // Always show the top-left total box; do not hide it on confirmOrder
+            if (totalBox) {
                 totalBox.style.display = 'block';
-            } else {
-                totalBox.style.display = 'none';
             }
             
             
@@ -2078,7 +2108,54 @@
 
     function updateTotalBox() {
       const total = calculatePrice(); // assumes you already have calculatePrice()
-      document.getElementById('totalAmount').textContent = total.toFixed(2);
+            // Determine whether pricing is configured as 'free' (both base and additional prices are zero)
+            const isFreePricing = (Number.isFinite(config.basePrice) ? config.basePrice : 0) === 0 && (Number.isFinite(config.additionalPrintPrice) ? config.additionalPrintPrice : 0) === 0;
+            // show a leading dollar sign so formatting matches the inline pill
+            const ta = document.getElementById('totalAmount');
+            const tbox = document.getElementById('totalBox');
+            if (ta) {
+                if (isFreePricing) {
+                    ta.textContent = 'FREE';
+                    if (tbox) tbox.classList.add('free');
+                } else {
+                    ta.textContent = '$' + total.toFixed(2);
+                    if (tbox) tbox.classList.remove('free');
+                }
+            }
+      // keep any per-screen inline totals in sync as well
+      try { updateInlineTotals(); } catch (e) { /* ignore if not ready */ }
+    }
+
+    // Update any inline total UI elements placed above navigation on specific screens
+    function updateInlineTotals() {
+        const total = calculatePrice();
+        // update amount text in all inline total spans; use operator config to determine FREE state
+        const isFreePricing = (Number.isFinite(config.basePrice) ? config.basePrice : 0) === 0 && (Number.isFinite(config.additionalPrintPrice) ? config.additionalPrintPrice : 0) === 0;
+        document.querySelectorAll('.inline-total').forEach(el => {
+            try {
+                const span = el.querySelector('.inline-total-amount');
+                if (!span) return;
+                if (isFreePricing) {
+                    span.textContent = 'FREE';
+                    el.classList.add('free');
+                } else {
+                    span.textContent = '$' + total.toFixed(2);
+                    el.classList.remove('free');
+                }
+            } catch (e) { /* ignore */ }
+        });
+
+        // show inline total only when its parent screen is active
+        document.querySelectorAll('.inline-total').forEach(el => {
+            try {
+                const screen = el.closest('.screen');
+                if (screen && screen.classList.contains('active')) {
+                    el.style.display = 'block';
+                } else {
+                    el.style.display = 'none';
+                }
+            } catch (e) { /* ignore */ }
+        });
     }
 
     // Update the descriptive price text on the Print Count screen based on operator config
@@ -2091,12 +2168,15 @@
         const add = Number.isFinite(config.additionalPrintPrice) ? config.additionalPrintPrice : 0;
 
         if (base === 0 && add === 0) {
-            el.style.display = 'none';
-            el.textContent = '';
+            // When photos are completely free, show an explicit FREE hint so users aren't confused
+            el.style.display = 'block';
+            el.classList.add('free');
+            el.textContent = 'Photos are FREE — no charge';
             return;
         }
 
         el.style.display = 'block';
+        el.classList.remove('free');
 
         // Choose friendly phrasing depending on which prices are set
         if (base > 0 && add > 0) {
@@ -2163,6 +2243,8 @@
             }
             
             document.getElementById('paymentNext').disabled = false;
+            // refresh totals inline and top-right so the payment screen shows the latest price
+            try { updateTotalBox(); } catch (e) { /* ignore */ }
         }
 
         // Name entry
@@ -2725,6 +2807,8 @@
             if (screenId === 'printCount') {
                 try { updatePrintPriceDisplay(); } catch (e) { /* ignore */ }
             }
+            // Refresh totals when entering screens so inline / top totals are accurate
+            try { updateTotalBox(); } catch (e) { /* ignore */ }
         };
         // Ensure initial position is correct on load
         try { updateA11yPosition(currentScreen); } catch (e) {}
